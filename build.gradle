@@ -1,0 +1,200 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'de.thetaphi:forbiddenapis:2.3'
+    }
+}
+
+plugins {
+    id "com.github.spotbugs" version "1.6.0"
+    id "com.github.johnrengelman.shadow" version "2.0.2"
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+Properties props = new Properties()
+props.load(new FileInputStream(file("gradle/version.properties")));
+ext.set("versions", props)
+
+project.version = "0.0.1"
+
+allprojects {
+    group = 'io.crate'
+
+    apply plugin: 'idea'
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'com.github.spotbugs'
+    apply plugin: 'jacoco'
+    apply plugin: 'checkstyle'
+    apply plugin: 'de.thetaphi.forbiddenapis'
+    apply plugin: 'com.github.johnrengelman.shadow'
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    sourceCompatibility = "8"
+    targetCompatibility = "8"
+
+}
+
+dependencies {
+    // Needed to output all metrics using the prometheus text format
+    compile "io.prometheus:simpleclient_common:${versions.prometheus_lib}"
+    // Let's use default JMX metric exporter from prometheus lib
+    compile "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
+
+    // logging
+    shadow "org.apache.logging.log4j:log4j-api:${versions.log4j}"
+    shadow "org.apache.logging.log4j:log4j-core:${versions.log4j}"
+}
+
+
+
+jacoco {
+    toolVersion = "0.8.0"
+}
+
+spotbugs {
+    ignoreFailures = true
+    effort = "max"
+    reportLevel = "low"
+}
+
+tasks.withType(com.github.spotbugs.SpotBugsTask) {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+tasks.withType(Javadoc) {
+    failOnError = false
+}
+
+
+compileJava {
+    options.warnings = true
+    options.deprecation = true
+
+    finalizedBy checkstyleMain
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+        resources {
+            srcDir 'src/main/resources'
+        }
+    }
+    test {
+        java {
+            srcDir 'src/test/java'
+        }
+    }
+}
+
+def jvmTestFlags = ['-ea']
+
+idea {
+    workspace {
+        iws.withXml { xmlFile ->
+            def runManager = xmlFile.asNode().component.find { it.@name == 'RunManager' }
+
+            // enable assertions for junit tests
+            def junitDefaults = runManager.configuration.find { it.@default == 'true' && it.@type == 'JUnit' }
+            junitDefaults.option.find { it.@name == 'VM_PARAMETERS' }.replaceNode {
+                option(name: 'VM_PARAMETERS', value: jvmTestFlags.join(' '))
+            }
+        }
+    }
+
+    project {
+        vcs = 'Git'
+
+        ipr {
+            withXml { provider ->
+                def node = provider.asNode()
+                node.append(new XmlParser().parse(file("idea/codeStyle.xml")))
+                node.append(new XmlParser().parse(file("idea/codeInspection.xml")))
+                def copyrightManager = node.component.find { it.'@name' == 'CopyrightManager' }
+                copyrightManager.@default = "CrateASL2"
+                def aslCopyright = copyrightManager.copyright.find {
+                    it.option.find { it.@name == "myName" }?.@value == "CrateASL2"
+                }
+                if (aslCopyright == null) {
+                    copyrightManager.append(new XmlParser().parse(file("idea/copyright.xml")))
+                }
+            }
+        }
+    }
+}
+
+checkstyle {
+    toolVersion = "8.1"
+    def checkstyle_dir = new String("$rootDir/gradle/checkstyle/")
+    configProperties = [
+            'checkstyleDir' : checkstyle_dir,
+            // May be overwritten by other modules, e.g. enterprise
+            'licenseHeaderFile' : 'header.txt'
+    ]
+    configFile = file(checkstyle_dir + "rules.xml")
+    checkstyleTest.enabled = false
+}
+
+forbiddenApisMain {
+    bundledSignatures = ['jdk-unsafe', 'jdk-deprecated']
+    signaturesFiles = files("$rootDir/gradle/forbidden-signatures.txt")
+    suppressAnnotations = ['**.SuppressForbidden']
+    ignoreFailures = false
+}
+
+shadowJar {
+    baseName 'crate_jmx_agent'
+    classifier ''
+    duplicatesStrategy 'fail'
+    configurations = [project.configurations.compile]
+
+    dependencies {
+        exclude(dependency {
+            it.moduleGroup == 'org.apache'
+        })
+    }
+    manifest {
+        attributes(
+            "Implementation-Title": "Crate.IO JMX HTTP Exporter Agent",
+            "Implementation-Version": project.version,
+            "Premain-Class": 'io.crate.jmx.JmxAgent'
+            )
+    }
+
+    relocate 'io.prometheus', 'io.crate.jmx.shade.io.prometheus'
+}
+
+
+
+jar.dependsOn(dependsOn: [shadowJar])
+jar {
+    baseName 'crate_jmx_exporter'
+    actions = [] // Do nothing, build shadedJar instead
+}
+
+
+task buildJar(type: Jar, dependsOn: [classes]) {
+    doLast {
+        tasks.shadowJar.execute()
+    }
+}
+tasks.buildJar.mustRunAfter jar // otherwise jar task would override shadowJar artifact
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.5.1'
+}

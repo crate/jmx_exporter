@@ -1,0 +1,19 @@
+# OS files
+.DS_Store
+*~
+
+# Java files
+.classpath
+.project
+.settings
+.gradle/
+build/
+
+# intellij files
+.idea/
+reports/
+*.iml
+*.ipr
+*.iws
+
+
