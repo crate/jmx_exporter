@@ -22,9 +22,6 @@
 
 package io.crate.jmx;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import javax.management.ObjectName;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -40,9 +37,6 @@ import java.util.regex.Pattern;
  * https://github.com/prometheus/jmx_exporter/blob/master/collector/src/main/java/io/prometheus/jmx/JmxMBeanPropertyCache.java
  */
 class MBeanPropertyCache {
-
-    private static final Logger LOGGER = LogManager.getLogger(CrateCollector.class);
-
 
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
             "([^,=:\\*\\?]+)" + // Name - non-empty, anything but comma, equals, colon, star, or question mark
@@ -76,7 +70,6 @@ class MBeanPropertyCache {
         if (keyProperties == null) {
             keyProperties = new LinkedHashMap<>();
             String properties = mbeanName.getKeyPropertyListString();
-            LOGGER.debug("mbean properties: {} of objectName: {}", properties, mbeanName);
             Matcher match = PROPERTY_PATTERN.matcher(properties);
             while (match.lookingAt()) {
                 keyProperties.put(match.group(1), match.group(2));

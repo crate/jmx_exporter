@@ -48,10 +48,6 @@ dependencies {
     // Let's use default JMX metric exporter from prometheus lib
     compile "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
 
-    // logging
-    shadow "org.apache.logging.log4j:log4j-api:${versions.log4j}"
-    shadow "org.apache.logging.log4j:log4j-core:${versions.log4j}"
-
     testCompile "junit:junit:${versions.junit}"
 }
 

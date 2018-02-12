@@ -26,15 +26,12 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.crate.jmx.CrateCollector;
 import io.crate.jmx.MBeanAttributeValueStorage;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 
 public class HttpReadyHandler implements HttpHandler {
 
-    private static final Logger LOGGER = LogManager.getLogger(HttpReadyHandler.class);
     private static final String READY_ATTR_NAME = "NodeStatus_Ready";
 
     private final CrateCollector crateCollector;
@@ -54,9 +51,6 @@ public class HttpReadyHandler implements HttpHandler {
         exchange.getResponseHeaders().set("Content-Length", "0");
 
         Object readyValue = attributeValueStorage.get(READY_ATTR_NAME);
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Ready value: {}", readyValue);
-        }
         if (readyValue instanceof Boolean) {
             Boolean boolVal = (Boolean) readyValue;
             if (boolVal) {

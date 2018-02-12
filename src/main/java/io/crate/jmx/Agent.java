@@ -27,19 +27,13 @@ import io.crate.jmx.http.HttpMetricHandler;
 import io.crate.jmx.http.HttpReadyHandler;
 import io.crate.jmx.http.HttpServer;
 import io.prometheus.client.hotspot.DefaultExports;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
 
 public class Agent {
 
-    static HttpServer server;
-
-    static {
-        Configurator.setRootLevel(Level.DEBUG);
-    }
+    static HttpServer SERVER;
 
     public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
         // Bind to all interfaces by default (this includes IPv6).
@@ -71,18 +65,19 @@ public class Agent {
         }
 
         DefaultExports.initialize();
+
+        SERVER = new HttpServer(socket, true);
+
+        HttpHandler mHandler = new HttpMetricHandler();
+        SERVER.registerHandler("/", mHandler);
+        SERVER.registerHandler("/metrics", mHandler);
+
         MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
         CrateCollector crateCollector = new CrateCollector(beanAttributeValueStorage::put).register();
 
-        server = new HttpServer(socket, true);
-
-        HttpHandler mHandler = new HttpMetricHandler();
-        server.registerHandler("/", mHandler);
-        server.registerHandler("/metrics", mHandler);
-
         HttpHandler readyHandler = new HttpReadyHandler(crateCollector, beanAttributeValueStorage);
-        server.registerHandler("/ready", readyHandler);
+        SERVER.registerHandler("/ready", readyHandler);
 
-        server.start(true);
+        SERVER.start(true);
     }
 }

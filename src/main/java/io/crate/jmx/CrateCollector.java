@@ -23,8 +23,6 @@
 package io.crate.jmx;
 
 import io.prometheus.client.Collector;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
@@ -45,12 +43,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CrateCollector extends Collector {
 
-    private static final Logger LOGGER = LogManager.getLogger(CrateCollector.class);
+    private static final Logger LOGGER = Logger.getLogger(CrateCollector.class.getName());
 
     private static final String CRATE_DOMAIN = "io.crate.monitoring";
     private static final String CRATE_DOMAIN_REPLACEMENT = "crate";
@@ -79,7 +79,7 @@ public class CrateCollector extends Collector {
                 MBeanInfo mBeanInfo = beanConn.getMBeanInfo(mBeanName);
                 scrapeMBean(mBeanInfo, mBeanName);
             } catch (InstanceNotFoundException | IntrospectionException | ReflectionException e) {
-                LOGGER.error("Cannot get MBean info for {}", mBeanName.getCanonicalName(), e);
+                LOGGER.log(Level.SEVERE, "Cannot get MBean info for " + mBeanName.getCanonicalName(), e);
             }
         }
         return new ArrayList<>(metricFamilySamplesMap.values());
@@ -148,7 +148,6 @@ public class CrateCollector extends Collector {
             Object beanValue) {
 
         String beanName = domain + angleBrackets(beanProperties.toString());
-        LOGGER.debug("beanName: {}", beanName);
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
 
@@ -199,7 +198,7 @@ public class CrateCollector extends Collector {
             labelValue = labelValue + ": " + beanValue.toString();
             value = (Boolean) beanValue ? 1 : 0;
         } else {
-            LOGGER.error("Ignoring unsupported bean: " + name + ": " + beanValue);
+            LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + name + ": " + beanValue);
             return;
         }
 
@@ -207,7 +206,9 @@ public class CrateCollector extends Collector {
         List<String> labelValues = Collections.singletonList(labelValue);
         String fullname = SNAKE_CASE_PATTERN.matcher(safeName(name.toString())).replaceAll("$1_$2").toLowerCase();
 
-        LOGGER.debug("add metric sample: " + fullname + " " + labelNames + " " + labelValues + " " + value.doubleValue());
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + labelNames + " " + labelValues + " " + value.doubleValue());
+        }
         addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, value.doubleValue()),
                 type, help);
     }
@@ -224,16 +225,14 @@ public class CrateCollector extends Collector {
     }
 
     private static Set<ObjectName> resolveMBeans() {
-        LOGGER.debug("resolving mbeans...");
         MBeanServer beanConn = ManagementFactory.getPlatformMBeanServer();
         Set<ObjectName> mBeanNames = new HashSet<>();
         try {
             for (ObjectInstance instance : beanConn.queryMBeans(new ObjectName(CRATE_MBEAN_PATTERN), null)) {
-                LOGGER.debug("Found Crate MBean {}", instance.getClassName());
                 mBeanNames.add(instance.getObjectName());
             }
         } catch (MalformedObjectNameException e) {
-            LOGGER.error("Cannot resolve Crate MBean, malformed pattern {}", CRATE_MBEAN_PATTERN, e);
+            LOGGER.log(Level.SEVERE, "Cannot resolve Crate MBean, malformed pattern " + CRATE_MBEAN_PATTERN, e);
         }
         return mBeanNames;
     }
@@ -257,7 +256,9 @@ public class CrateCollector extends Collector {
     }
 
     private static void logScrape(String name, String msg) {
-        LOGGER.debug("scrape: '" + name + "': " + msg);
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "scrape: '" + name + "': " + msg);
+        }
     }
 
 }
