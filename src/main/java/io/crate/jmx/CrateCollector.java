@@ -173,7 +173,7 @@ public class CrateCollector extends Collector {
         }
         StringBuilder name = new StringBuilder();
         name.append(domain);
-        if (!mBeanName.equals("")) {
+        if (!mBeanName.isEmpty()) {
             name.append(SEP);
             name.append(mBeanName);
         }
@@ -207,10 +207,10 @@ public class CrateCollector extends Collector {
         String fullname = SNAKE_CASE_PATTERN.matcher(safeName(name.toString())).replaceAll("$1_$2").toLowerCase();
 
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + labelNames + " " + labelValues + " " + value.doubleValue());
+            LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + labelNames + " " + labelValues + " " +
+                                   value.doubleValue());
         }
-        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, value.doubleValue()),
-                type, help);
+        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, value.doubleValue()), type, help);
     }
 
     private void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
@@ -238,13 +238,13 @@ public class CrateCollector extends Collector {
     }
 
     // [] and () are special in regexes, so switch to <>.
-    private static String angleBrackets(String s) {
-        return "<" + s.substring(1, s.length() - 1) + ">";
+    private static String angleBrackets(String str) {
+        return "<" + str.substring(1, str.length() - 1) + ">";
     }
 
-    private static String safeName(String s) {
+    private static String safeName(String str) {
         // Change invalid chars to underscore, and merge underscores.
-        return MULTIPLE_UNDERSCORES.matcher(UNSAFE_CHARS.matcher(s).replaceAll("_")).replaceAll("_");
+        return MULTIPLE_UNDERSCORES.matcher(UNSAFE_CHARS.matcher(str).replaceAll("_")).replaceAll("_");
     }
 
 
@@ -260,5 +260,4 @@ public class CrateCollector extends Collector {
             LOGGER.log(Level.FINE, "scrape: '" + name + "': " + msg);
         }
     }
-
 }

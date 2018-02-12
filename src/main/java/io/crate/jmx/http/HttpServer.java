@@ -38,7 +38,9 @@ public class HttpServer {
 
     static boolean shouldUseCompression(HttpExchange exchange) {
         List<String> encodingHeaders = exchange.getRequestHeaders().get("Accept-Encoding");
-        if (encodingHeaders == null) return false;
+        if (encodingHeaders == null) {
+            return false;
+        }
 
         for (String encodingHeader : encodingHeaders) {
             String[] encodings = encodingHeader.split(",");
@@ -114,13 +116,5 @@ public class HttpServer {
                 Thread.currentThread().interrupt();
             }
         }
-    }
-
-    /**
-     * Stop the HTTP server.
-     */
-    public void stop() {
-        server.stop(0);
-        executorService.shutdown(); // Free any (parked/idle) threads in pool
     }
 }

@@ -61,27 +61,20 @@ public class HttpMetricHandler implements HttpHandler {
     private final CollectorRegistry registry = CollectorRegistry.defaultRegistry;
     private final LocalByteArray response = new LocalByteArray();
 
-    public HttpMetricHandler() {
-    }
-
-
     public void handle(HttpExchange t) throws IOException {
         String query = t.getRequestURI().getRawQuery();
 
         ByteArrayOutputStream response = this.response.get();
         response.reset();
         OutputStreamWriter osw = new OutputStreamWriter(response);
-        TextFormat.write004(osw,
-                registry.filteredMetricFamilySamples(parseQuery(query)));
+        TextFormat.write004(osw, registry.filteredMetricFamilySamples(parseQuery(query)));
         osw.flush();
         osw.close();
         response.flush();
         response.close();
 
-        t.getResponseHeaders().set("Content-Type",
-                TextFormat.CONTENT_TYPE_004);
-        t.getResponseHeaders().set("Content-Length",
-                String.valueOf(response.size()));
+        t.getResponseHeaders().set("Content-Type", TextFormat.CONTENT_TYPE_004);
+        t.getResponseHeaders().set("Content-Length", String.valueOf(response.size()));
         if (HttpServer.shouldUseCompression(t)) {
             t.getResponseHeaders().set("Content-Encoding", "gzip");
             t.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
@@ -94,5 +87,4 @@ public class HttpMetricHandler implements HttpHandler {
         }
         t.close();
     }
-
 }

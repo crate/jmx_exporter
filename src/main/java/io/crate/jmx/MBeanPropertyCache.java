@@ -57,8 +57,7 @@ class MBeanPropertyCache {
                     ")");
 
     // Implement a version of ObjectName.getKeyPropertyList that returns the
-    // properties in the ordered they were added (the ObjectName stores them
-    // in the order they were added).
+    // properties in the order they were added.
     private final Map<ObjectName, LinkedHashMap<String, String>> keyPropertiesPerBean;
 
     MBeanPropertyCache() {
@@ -83,5 +82,4 @@ class MBeanPropertyCache {
         }
         return keyProperties;
     }
-
 }
