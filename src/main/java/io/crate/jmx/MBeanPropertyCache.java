@@ -76,7 +76,7 @@ class MBeanPropertyCache {
         if (keyProperties == null) {
             keyProperties = new LinkedHashMap<>();
             String properties = mbeanName.getKeyPropertyListString();
-            LOGGER.debug("mbean properties: {}", properties);
+            LOGGER.debug("mbean properties: {} of objectName: {}", properties, mbeanName);
             Matcher match = PROPERTY_PATTERN.matcher(properties);
             while (match.lookingAt()) {
                 keyProperties.put(match.group(1), match.group(2));

@@ -83,18 +83,21 @@ public class HttpServer {
     public HttpServer(InetSocketAddress addr, boolean daemon) throws IOException {
         server = com.sun.net.httpserver.HttpServer.create();
         server.bind(addr, 3);
-        HttpHandler mHandler = new HttpMetricHandler();
-        server.createContext("/", mHandler);
-        server.createContext("/metrics", mHandler);
         executorService = Executors.newFixedThreadPool(5, DaemonThreadFactory.defaultThreadFactory(daemon));
         server.setExecutor(executorService);
-        start(daemon);
+    }
+
+    /**
+     * Register a HTTP handler under a given URI.
+     */
+    public void registerHandler(String uri, HttpHandler handler) {
+        server.createContext(uri, handler);
     }
 
     /**
      * Start a HTTP server by making sure that its background thread inherit proper daemon flag.
      */
-    private void start(boolean daemon) {
+    public void start(boolean daemon) {
         if (daemon == Thread.currentThread().isDaemon()) {
             server.start();
         } else {

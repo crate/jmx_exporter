@@ -41,10 +41,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,9 +52,9 @@ public class CrateCollector extends Collector {
 
     private static final Logger LOGGER = LogManager.getLogger(CrateCollector.class);
 
-    private static final String CRATE_NS = "io.crate.monitoring";
-    private static final String CRATE_MBEAN_PATTERN = CRATE_NS + ":*";
-    private static final String NAME_PREFIX = "crate_";
+    private static final String CRATE_DOMAIN = "io.crate.monitoring";
+    private static final String CRATE_DOMAIN_REPLACEMENT = "crate";
+    private static final String CRATE_MBEAN_PATTERN = CRATE_DOMAIN + ":*";
 
     private static final char SEP = '_';
     private static final Pattern UNSAFE_CHARS = Pattern.compile("[^a-zA-Z0-9:_]");
@@ -63,11 +63,13 @@ public class CrateCollector extends Collector {
     private static final Pattern LABEL_VALUE_PATTERN = Pattern.compile("([A-Z][a-z0-9]+)(.+)*");
 
     private final MBeanServer beanConn;
-    private Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
+    private final BiConsumer<String, Object> beanValueConsumer;
+    private final Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
     private final MBeanPropertyCache MBeanPropertyCache = new MBeanPropertyCache();
 
-    CrateCollector() {
+    CrateCollector(BiConsumer<String, Object> beanValueConsumer) {
         beanConn = ManagementFactory.getPlatformMBeanServer();
+        this.beanValueConsumer = beanValueConsumer;
     }
 
     @Override
@@ -106,7 +108,6 @@ public class CrateCollector extends Collector {
             processBeanValue(
                     mBeanName.getDomain(),
                     MBeanPropertyCache.getKeyPropertyList(mBeanName),
-                    new LinkedList<>(),
                     attr.getName(),
                     attr.getType(),
                     attr.getDescription(),
@@ -118,7 +119,6 @@ public class CrateCollector extends Collector {
     private void processBeanValue(
             String domain,
             LinkedHashMap<String, String> beanProperties,
-            LinkedList<String> attrKeys,
             String attrName,
             String attrType,
             String attrDescription,
@@ -130,7 +130,6 @@ public class CrateCollector extends Collector {
             recordBean(
                     domain,
                     beanProperties,
-                    attrKeys,
                     attrName,
                     attrType,
                     attrDescription,
@@ -143,40 +142,41 @@ public class CrateCollector extends Collector {
     private void recordBean(
             String domain,
             LinkedHashMap<String, String> beanProperties,
-            LinkedList<String> attrKeys,
             String attrName,
             String attrType,
             String attrDescription,
             Object beanValue) {
 
-        String beanName = domain + angleBrackets(beanProperties.toString()) + angleBrackets(attrKeys.toString());
+        String beanName = domain + angleBrackets(beanProperties.toString());
         LOGGER.debug("beanName: {}", beanName);
         // attrDescription tends not to be useful, so give the fully qualified name too.
         String help = attrDescription + " (" + beanName + attrName + ")";
 
-        domain =  domain.replace(CRATE_NS, NAME_PREFIX);
+        String mBeanName = "";
+        if (beanProperties.size() > 0) {
+            mBeanName = beanProperties.values().iterator().next();
+        }
+        beanValueConsumer.accept(mBeanName + "_" + attrName, beanValue);
 
-        defaultExport(domain, beanProperties, attrKeys, attrName, attrType, help, beanValue, Type.UNTYPED);
+        defaultExport(domain, mBeanName, attrName, attrType, help, beanValue, Type.UNTYPED);
     }
 
     private void defaultExport(
             String domain,
-            LinkedHashMap<String, String> beanProperties,
-            LinkedList<String> attrKeys,
+            String mBeanName,
             String attrName,
             String attrType,
             String help,
             Object beanValue,
             Type type) {
+        if (domain.equals(CRATE_DOMAIN)) {
+            domain = CRATE_DOMAIN_REPLACEMENT;
+        }
         StringBuilder name = new StringBuilder();
         name.append(domain);
-        if (beanProperties.size() > 0) {
+        if (!mBeanName.equals("")) {
             name.append(SEP);
-            name.append(beanProperties.values().iterator().next());
-        }
-        for (String k : attrKeys) {
-            name.append(SEP);
-            name.append(k);
+            name.append(mBeanName);
         }
 
         Matcher matcher = LABEL_VALUE_PATTERN.matcher(attrName);
