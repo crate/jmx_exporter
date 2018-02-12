@@ -22,6 +22,9 @@
 
 package io.crate.jmx;
 
+import com.sun.net.httpserver.HttpHandler;
+import io.crate.jmx.http.HttpMetricHandler;
+import io.crate.jmx.http.HttpReadyHandler;
 import io.crate.jmx.http.HttpServer;
 import io.prometheus.client.hotspot.DefaultExports;
 import org.apache.logging.log4j.Level;
@@ -67,8 +70,19 @@ public class Agent {
             socket = new InetSocketAddress(host, port);
         }
 
-        new CrateCollector().register();
         DefaultExports.initialize();
+        MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
+        CrateCollector crateCollector = new CrateCollector(beanAttributeValueStorage::put).register();
+
         server = new HttpServer(socket, true);
+
+        HttpHandler mHandler = new HttpMetricHandler();
+        server.registerHandler("/", mHandler);
+        server.registerHandler("/metrics", mHandler);
+
+        HttpHandler readyHandler = new HttpReadyHandler(crateCollector, beanAttributeValueStorage);
+        server.registerHandler("/ready", readyHandler);
+
+        server.start(true);
     }
 }

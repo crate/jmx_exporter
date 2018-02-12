@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
-class HttpMetricHandler implements HttpHandler {
+public class HttpMetricHandler implements HttpHandler {
 
     private static class LocalByteArray extends ThreadLocal<ByteArrayOutputStream> {
         protected ByteArrayOutputStream initialValue() {
@@ -61,7 +61,7 @@ class HttpMetricHandler implements HttpHandler {
     private final CollectorRegistry registry = CollectorRegistry.defaultRegistry;
     private final LocalByteArray response = new LocalByteArray();
 
-    HttpMetricHandler() {
+    public HttpMetricHandler() {
     }
 
 
