@@ -171,7 +171,7 @@ shadowJar {
         attributes(
             "Implementation-Title": "Crate.IO JMX HTTP Exporter Agent",
             "Implementation-Version": project.version,
-            "Premain-Class": 'io.crate.jmx.JmxAgent'
+            "Premain-Class": 'io.crate.jmx.Agent'
             )
     }
 

@@ -39,9 +39,9 @@ import java.util.regex.Pattern;
  * Implementation derived from
  * https://github.com/prometheus/jmx_exporter/blob/master/collector/src/main/java/io/prometheus/jmx/JmxMBeanPropertyCache.java
  */
-class JmxMBeanPropertyCache {
+class MBeanPropertyCache {
 
-    private static final Logger LOGGER = LogManager.getLogger(JmxCrateCollector.class);
+    private static final Logger LOGGER = LogManager.getLogger(CrateCollector.class);
 
 
     private static final Pattern PROPERTY_PATTERN = Pattern.compile(
@@ -67,7 +67,7 @@ class JmxMBeanPropertyCache {
     // in the order they were added).
     private final Map<ObjectName, LinkedHashMap<String, String>> keyPropertiesPerBean;
 
-    JmxMBeanPropertyCache() {
+    MBeanPropertyCache() {
         this.keyPropertiesPerBean = new ConcurrentHashMap<>();
     }
 
