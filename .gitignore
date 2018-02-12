@@ -15,5 +15,5 @@ reports/
 *.iml
 *.ipr
 *.iws
-
+out/
 
