@@ -30,7 +30,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
 
-public class JmxAgent {
+public class Agent {
 
     static HttpServer server;
 
@@ -67,7 +67,7 @@ public class JmxAgent {
             socket = new InetSocketAddress(host, port);
         }
 
-        new JmxCrateCollector().register();
+        new CrateCollector().register();
         DefaultExports.initialize();
         server = new HttpServer(socket, true);
     }

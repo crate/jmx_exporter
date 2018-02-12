@@ -48,9 +48,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JmxCrateCollector extends Collector {
+public class CrateCollector extends Collector {
 
-    private static final Logger LOGGER = LogManager.getLogger(JmxCrateCollector.class);
+    private static final Logger LOGGER = LogManager.getLogger(CrateCollector.class);
 
     private static final String CRATE_NS = "io.crate.monitoring";
     private static final String CRATE_MBEAN_PATTERN = CRATE_NS + ":*";
@@ -64,9 +64,9 @@ public class JmxCrateCollector extends Collector {
 
     private final MBeanServer beanConn;
     private Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
-    private final JmxMBeanPropertyCache jmxMBeanPropertyCache = new JmxMBeanPropertyCache();
+    private final MBeanPropertyCache MBeanPropertyCache = new MBeanPropertyCache();
 
-    JmxCrateCollector() {
+    CrateCollector() {
         beanConn = ManagementFactory.getPlatformMBeanServer();
     }
 
@@ -105,7 +105,7 @@ public class JmxCrateCollector extends Collector {
 
             processBeanValue(
                     mBeanName.getDomain(),
-                    jmxMBeanPropertyCache.getKeyPropertyList(mBeanName),
+                    MBeanPropertyCache.getKeyPropertyList(mBeanName),
                     new LinkedList<>(),
                     attr.getName(),
                     attr.getType(),
