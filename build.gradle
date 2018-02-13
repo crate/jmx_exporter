@@ -48,7 +48,11 @@ dependencies {
     // Let's use default JMX metric exporter from prometheus lib
     compile "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
 
+    testCompile "io.crate:crate-testing:${versions.crate_testing}"
     testCompile "junit:junit:${versions.junit}"
+    testCompile ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
+        exclude group: 'junit', module: 'junit'
+    }
 }
 
 
@@ -166,7 +170,8 @@ shadowJar {
         attributes(
             "Implementation-Title": "Crate.IO JMX HTTP Exporter Agent",
             "Implementation-Version": project.version,
-            "Premain-Class": 'io.crate.jmx.Agent'
+            "Premain-Class": 'io.crate.jmx.Agent',
+            "Agent-Class": 'io.crate.jmx.Agent'
             )
     }
 

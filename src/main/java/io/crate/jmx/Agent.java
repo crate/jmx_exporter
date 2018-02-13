@@ -35,6 +35,10 @@ public class Agent {
 
     static HttpServer SERVER;
 
+    /**
+     * Entry method used when agent is attached via command line.
+     * See https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html
+     */
     public static void premain(String agentArgument, Instrumentation instrumentation) throws Exception {
         // Bind to all interfaces by default (this includes IPv6).
         String host = "0.0.0.0";
@@ -79,5 +83,13 @@ public class Agent {
         SERVER.registerHandler("/ready", readyHandler);
 
         SERVER.start(true);
+    }
+
+    /**
+     * Entry method when agent is attached to a running VM.
+     * See https://docs.oracle.com/javase/8/docs/api/java/lang/instrument/package-summary.html
+     */
+    public static void agentmain(String agentArgument, Instrumentation instrumentation) throws Exception {
+        premain(agentArgument, instrumentation);
     }
 }
