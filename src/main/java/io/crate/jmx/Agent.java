@@ -31,6 +31,12 @@ import io.prometheus.client.hotspot.DefaultExports;
 import java.lang.instrument.Instrumentation;
 import java.net.InetSocketAddress;
 
+/**
+ * Java Agent implementation for exposing CrateDB JMX metrics via HTTP.
+ *
+ * Derived from
+ * https://github.com/prometheus/jmx_exporter/blob/master/jmx_prometheus_javaagent/src/main/java/io/prometheus/jmx/JavaAgent.java.
+ */
 public class Agent {
 
     static HttpServer SERVER;

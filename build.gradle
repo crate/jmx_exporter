@@ -53,6 +53,8 @@ dependencies {
     testCompile ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
         exclude group: 'junit', module: 'junit'
     }
+    // gradle does not include tools.jar by default
+    testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
 }
 
 
@@ -194,6 +196,7 @@ task buildJar(type: Jar, dependsOn: [classes]) {
 }
 tasks.buildJar.mustRunAfter jar // otherwise jar task would override shadowJar artifact
 
+test.dependsOn(dependsOn: [buildJar])   // JAR is needed by integration tests
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.5.1'

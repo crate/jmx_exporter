@@ -22,6 +22,8 @@
 
 package io.crate.jmx;
 
+import io.crate.jmx.recorder.Recorder;
+import io.crate.jmx.recorder.RecorderRegistry;
 import io.prometheus.client.Collector;
 
 import javax.management.InstanceNotFoundException;
@@ -45,9 +47,14 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * A prometheus jmx {@link Collector} implementation for CrateDB specific JMX metrics.
+ *
+ * Derived from
+ * https://github.com/prometheus/jmx_exporter/blob/master/collector/src/main/java/io/prometheus/jmx/JmxCollector.java.
+ */
 public class CrateCollector extends Collector {
 
     private static final Logger LOGGER = Logger.getLogger(CrateCollector.class.getName());
@@ -57,10 +64,9 @@ public class CrateCollector extends Collector {
     private static final String CRATE_MBEAN_PATTERN = CRATE_DOMAIN + ":*";
 
     private static final char SEP = '_';
+    private static final Pattern SNAKE_CASE_PATTERN = Pattern.compile("([a-z0-9])([A-Z])");
     private static final Pattern UNSAFE_CHARS = Pattern.compile("[^a-zA-Z0-9:_]");
     private static final Pattern MULTIPLE_UNDERSCORES = Pattern.compile("__+");
-    private static final Pattern SNAKE_CASE_PATTERN = Pattern.compile("([a-z0-9])([A-Z])");
-    private static final Pattern LABEL_VALUE_PATTERN = Pattern.compile("([A-Z][a-z0-9]+)(.+)*");
 
     private final MBeanServer beanConn;
     private final BiConsumer<String, Object> beanValueConsumer;
@@ -116,101 +122,77 @@ public class CrateCollector extends Collector {
         }
     }
 
-    private void processBeanValue(
-            String domain,
-            LinkedHashMap<String, String> beanProperties,
-            String attrName,
-            String attrType,
-            String attrDescription,
-            Object value) {
+    private void processBeanValue(String domain,
+                                  LinkedHashMap<String, String> beanProperties,
+                                  String attrName,
+                                  String attrType,
+                                  String attrDescription,
+                                  Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
             logScrape(domain + beanProperties + attrName, value.toString());
-            recordBean(
-                    domain,
-                    beanProperties,
-                    attrName,
-                    attrType,
-                    attrDescription,
-                    value);
+            recordBean(beanProperties, attrName, attrDescription, value);
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
     }
 
-    private void recordBean(
-            String domain,
-            LinkedHashMap<String, String> beanProperties,
-            String attrName,
-            String attrType,
-            String attrDescription,
-            Object beanValue) {
-
-        String beanName = domain + angleBrackets(beanProperties.toString());
-        // attrDescription tends not to be useful, so give the fully qualified name too.
-        String help = attrDescription + " (" + beanName + attrName + ")";
-
+    private void recordBean(LinkedHashMap<String, String> beanProperties,
+                            String attrName,
+                            String attrDescription,
+                            Object beanValue) {
         String mBeanName = "";
         if (beanProperties.size() > 0) {
             mBeanName = beanProperties.values().iterator().next();
         }
         beanValueConsumer.accept(mBeanName + "_" + attrName, beanValue);
 
-        defaultExport(domain, mBeanName, attrName, attrType, help, beanValue, Type.UNTYPED);
+        Number value;
+        if (beanValue instanceof Number) {
+            value = ((Number) beanValue).doubleValue();
+        } else if (beanValue instanceof Boolean) {
+            value = (Boolean) beanValue ? 1 : 0;
+        } else {
+            LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
+            return;
+        }
+
+        Recorder recorder = RecorderRegistry.get(mBeanName);
+        if (recorder != null) {
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
+            if (supportedAttribute == false) {
+                LOGGER.log(Level.SEVERE,
+                        "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
+            }
+        } else {
+            String beanName = CRATE_DOMAIN_REPLACEMENT + angleBrackets(beanProperties.toString());
+            // attrDescription tends not to be useful, so give the fully qualified name too.
+            String help = attrDescription + " (" + beanName + attrName + ")";
+            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNTYPED);
+        }
     }
 
-    private void defaultExport(
-            String domain,
-            String mBeanName,
-            String attrName,
-            String attrType,
-            String help,
-            Object beanValue,
-            Type type) {
-        if (domain.equals(CRATE_DOMAIN)) {
-            domain = CRATE_DOMAIN_REPLACEMENT;
-        }
+    private void defaultExport(String domain,
+                               String mBeanName,
+                               String attrName,
+                               String help,
+                               Number value,
+                               Type type) {
         StringBuilder name = new StringBuilder();
         name.append(domain);
         if (!mBeanName.isEmpty()) {
             name.append(SEP);
             name.append(mBeanName);
         }
-
-        Matcher matcher = LABEL_VALUE_PATTERN.matcher(attrName);
-        String labelName = "label";
-        String labelValue = "";
-
-        if (matcher.matches()) {
-            labelValue = matcher.group(1);
-            attrName = matcher.group(2);
-            if (attrName != null) {
-                name.append(SEP);
-                name.append(attrName);
-            }
-        }
-
-        Number value;
-        if (beanValue instanceof Number) {
-            value = ((Number) beanValue).doubleValue();
-        } else if (beanValue instanceof Boolean) {
-            labelValue = labelValue + ": " + beanValue.toString();
-            value = (Boolean) beanValue ? 1 : 0;
-        } else {
-            LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + name + ": " + beanValue);
-            return;
-        }
-
-        List<String> labelNames = Collections.singletonList(labelName);
-        List<String> labelValues = Collections.singletonList(labelValue);
-        String fullname = SNAKE_CASE_PATTERN.matcher(safeName(name.toString())).replaceAll("$1_$2").toLowerCase();
+        name.append(SEP);
+        name.append(attrName);
+        String fullname = camelCaseToLower(name.toString());
 
         if (LOGGER.isLoggable(Level.FINE)) {
-            LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + labelNames + " " + labelValues + " " +
-                                   value.doubleValue());
+            LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + value.doubleValue());
         }
-        addSample(new MetricFamilySamples.Sample(fullname, labelNames, labelValues, value.doubleValue()), type, help);
+        addSample(new MetricFamilySamples.Sample(fullname, Collections.emptyList(), Collections.emptyList(), value.doubleValue()), type, help);
     }
 
     private void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
@@ -242,11 +224,14 @@ public class CrateCollector extends Collector {
         return "<" + str.substring(1, str.length() - 1) + ">";
     }
 
+    private static String camelCaseToLower(String str) {
+        return SNAKE_CASE_PATTERN.matcher(safeName(str)).replaceAll("$1_$2").toLowerCase();
+    }
+
     private static String safeName(String str) {
         // Change invalid chars to underscore, and merge underscores.
         return MULTIPLE_UNDERSCORES.matcher(UNSAFE_CHARS.matcher(str).replaceAll("_")).replaceAll("_");
     }
-
 
     /**
      * For debugging.
