@@ -1,0 +1,11 @@
+CrateDB JMX HTTP exporter
+Copyright 2018 Crate.IO GmbH ("Crate")
+
+Third party dependencies:
+
+============================================================
+
+Prometheus Java Libraries
+https://github.com/prometheus/client_java
+developed by The Prometheus Authors
+License: Apache License v2 (http://www.apache.org/licenses)
