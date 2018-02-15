@@ -115,7 +115,7 @@ public abstract class AbstractITest extends RandomizedTest {
             throw new RuntimeException("Cannot list files while searching the agent jar");
         }
         for (File file : files) {
-            if (file.getName().contains("crate_jmx_agent")) {
+            if (file.getName().contains("crate_jmx_exporter")) {
                 return file;
             }
         }

@@ -158,7 +158,7 @@ forbiddenApisMain {
 }
 
 shadowJar {
-    baseName 'crate_jmx_agent'
+    baseName 'crate_jmx_exporter'
     classifier ''
     duplicatesStrategy 'fail'
     configurations = [project.configurations.compile]
@@ -180,14 +180,11 @@ shadowJar {
     relocate 'io.prometheus', 'io.crate.jmx.shade.io.prometheus'
 }
 
-
-
 jar.dependsOn(dependsOn: [shadowJar])
 jar {
     baseName 'crate_jmx_exporter'
     actions = [] // Do nothing, build shadedJar instead
 }
-
 
 task buildJar(type: Jar, dependsOn: [classes]) {
     doLast {
