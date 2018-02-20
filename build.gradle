@@ -26,6 +26,7 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'java'
     apply plugin: 'maven'
+    apply plugin: 'signing'
     apply plugin: 'com.github.spotbugs'
     apply plugin: 'jacoco'
     apply plugin: 'checkstyle'
@@ -39,7 +40,6 @@ allprojects {
 
     sourceCompatibility = "8"
     targetCompatibility = "8"
-
 }
 
 dependencies {
@@ -157,8 +157,11 @@ forbiddenApisMain {
     ignoreFailures = false
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.5.1'
+}
+
 shadowJar {
-    baseName 'crate_jmx_exporter'
     classifier ''
     duplicatesStrategy 'fail'
     configurations = [project.configurations.compile]
@@ -182,7 +185,6 @@ shadowJar {
 
 jar.dependsOn(dependsOn: [shadowJar])
 jar {
-    baseName 'crate_jmx_exporter'
     actions = [] // Do nothing, build shadedJar instead
 }
 
@@ -195,6 +197,99 @@ tasks.buildJar.mustRunAfter jar // otherwise jar task would override shadowJar a
 
 test.dependsOn(dependsOn: [buildJar])   // JAR is needed by integration tests
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+
+task myJavadocs(type: Javadoc, dependsOn: processResources) {
+    classpath = configurations.compile
+    source = sourceSets.main.allJava
+}
+
+task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
+    classifier = 'javadoc'
+    from myJavadocs.destinationDir
+    manifest {
+        attributes("Implementation-Title": "Crate.IO JMX HTTP Exporter Agent")
+    }
+}
+
+task buildJavadocJar (dependsOn: [myJavadocs] ) << {
+    tasks.javadocJar.execute()
+}
+
+task sourceJar (type : Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+    manifest {
+        attributes("Implementation-Title": "Crate.IO JMX HTTP Exporter Agent")
+    }
+}
+
+task buildSourceJar () << {
+    tasks.sourceJar.execute()
+}
+
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourceJar
+}
+
+task signJars (type : Sign, dependsOn: [jar, buildJavadocJar, buildSourceJar]) {
+    sign configurations.archives
+}
+
+
+project.ext.bintrayUsername = project.hasProperty('bintrayUsername') ? bintrayUsername : ""
+project.ext.bintrayPassword = project.hasProperty('bintrayPassword') ? bintrayPassword : ""
+project.ext.url = 'https://crate.io'
+project.ext.scm = {
+    url 'https://github.com/crate/jmx_exporter'
+    connection 'scm:git:git://github.com/crate/jmx_exporter.git'
+    developerConnection 'scm:git:ssh:git@github.com:crate/jmx_exporter.git'
+}
+project.ext.licenses = {
+    license {
+        name 'The Apache Software License, Version 2.0'
+        url 'http://www.apache.org/license/LICENSE-2.0.txt'
+        distribution 'repo'
+    }
+}
+project.ext.developers = {
+    developer {
+        id 'crate'
+        name 'Crate Developers'
+        email 'office@crate.io'
+    }
+}
+
+uploadArchives.dependsOn([signJars])
+uploadArchives {
+    repositories{
+        mavenDeployer {
+            beforeDeployment {
+                MavenDeployment deployment -> signing.signPom(deployment)
+                    if (project.ext.bintrayUsername.length() == 0 || project.ext.bintrayPassword.length() == 0) {
+                        throw new StopExecutionException("uploadArchives cannot be called without bintray username and password")
+                    }
+            }
+
+            pom.project {
+                artifactId 'crate-jmx-exporter'
+                name 'crate-jmx-exporter'
+                description 'Crate.IO Java Agent to expose JMX metrics via HTTP'
+                url project.ext.url
+                scm project.ext.scm
+                licenses project.ext.licenses
+                developers project.ext.developers
+            }
+
+            pom = addFilter('crate-jmx-exporter') {artifact, file ->
+                artifact.name == 'crate-jmx-exporter'
+            }
+
+            repository(id: 'crate-jmx-exporter', url: 'https://api.bintray.com/maven/crate/crate/crate-jmx-exporter') {
+                authentication(userName: project.ext.bintrayUsername, password: project.ext.bintrayPassword)
+            }
+        }
+    }
 }
