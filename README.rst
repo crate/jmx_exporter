@@ -2,6 +2,11 @@
  Crate JMX HTTP Exporter
 =========================
 
+.. image:: https://travis-ci.org/crate/jmx_exporter.svg?branch=master
+    :target: https://travis-ci.org/crate/jmx_exporter
+    :alt: Travis CI
+
+|
 This project implements a `javaagent` which exposes CrateDB specific JMX MBean
 metrics over HTTP.
 
