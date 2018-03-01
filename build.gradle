@@ -85,7 +85,7 @@ compileJava {
     options.warnings = true
     options.deprecation = true
 
-    finalizedBy checkstyleMain
+    finalizedBy checkstyleMain, forbiddenApisMain, spotbugsMain
 }
 
 
