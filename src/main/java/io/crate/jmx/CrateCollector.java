@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -226,7 +227,7 @@ public class CrateCollector extends Collector {
     }
 
     private static String camelCaseToLower(String str) {
-        return SNAKE_CASE_PATTERN.matcher(safeName(str)).replaceAll("$1_$2").toLowerCase();
+        return SNAKE_CASE_PATTERN.matcher(safeName(str)).replaceAll("$1_$2").toLowerCase(Locale.ENGLISH);
     }
 
     private static String safeName(String str) {

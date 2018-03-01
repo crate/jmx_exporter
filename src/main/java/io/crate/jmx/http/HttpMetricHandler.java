@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
@@ -66,7 +67,7 @@ public class HttpMetricHandler implements HttpHandler {
 
         ByteArrayOutputStream response = this.response.get();
         response.reset();
-        OutputStreamWriter osw = new OutputStreamWriter(response);
+        OutputStreamWriter osw = new OutputStreamWriter(response, StandardCharsets.UTF_8);
         TextFormat.write004(osw, registry.filteredMetricFamilySamples(parseQuery(query)));
         osw.flush();
         osw.close();

@@ -28,6 +28,7 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,7 +46,7 @@ public class HttpServer {
         for (String encodingHeader : encodingHeaders) {
             String[] encodings = encodingHeader.split(",");
             for (String encoding : encodings) {
-                if (encoding.trim().toLowerCase().equals("gzip")) {
+                if (encoding.trim().toLowerCase(Locale.ENGLISH).equals("gzip")) {
                     return true;
                 }
             }
@@ -76,7 +77,6 @@ public class HttpServer {
 
 
     private final com.sun.net.httpserver.HttpServer server;
-    private final ExecutorService executorService;
 
 
     /**
@@ -85,7 +85,7 @@ public class HttpServer {
     public HttpServer(InetSocketAddress addr, boolean daemon) throws IOException {
         server = com.sun.net.httpserver.HttpServer.create();
         server.bind(addr, 3);
-        executorService = Executors.newFixedThreadPool(5, DaemonThreadFactory.defaultThreadFactory(daemon));
+        ExecutorService executorService = Executors.newFixedThreadPool(5, DaemonThreadFactory.defaultThreadFactory(daemon));
         server.setExecutor(executorService);
     }
 
