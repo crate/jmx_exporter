@@ -29,6 +29,7 @@ import java.net.HttpURLConnection;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 
 public class MetricsITest extends AbstractITest {
 
@@ -134,5 +135,15 @@ public class MetricsITest extends AbstractITest {
         assertThat(METRICS_RESPONSE, containsString("process_start_time_seconds"));
         assertThat(METRICS_RESPONSE, containsString("process_open_fds"));
         assertThat(METRICS_RESPONSE, containsString("process_max_fds"));
+    }
+
+    @Test
+    public void testRequestingMultipleTimesDoesNotResultInDuplicateMetrics() throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) randomJmxUrlFromServers("/metrics").openConnection();
+        assertThat(connection.getResponseCode(), is(200));
+        String response = parseResponse(connection.getInputStream());
+
+        assertThat(response, containsString("crate_ready 1.0\n"));
+        assertThat(response, not(containsString("crate_ready 1.0\ncrate_ready 1.0\n")));
     }
 }

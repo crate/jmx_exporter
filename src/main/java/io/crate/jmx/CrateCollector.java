@@ -80,6 +80,7 @@ public class CrateCollector extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
+        metricFamilySamplesMap.clear();
         for (ObjectName mBeanName : resolveMBeans()) {
             try {
                 MBeanInfo mBeanInfo = beanConn.getMBeanInfo(mBeanName);
