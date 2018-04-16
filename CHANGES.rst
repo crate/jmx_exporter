@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2018/04/16 0.2.0
+================
+
 - Added a new "metric" under /metrics endpoint which exposes NodeInfoMBean
   attributes (NodeId, NodeName).
 

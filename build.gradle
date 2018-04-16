@@ -16,7 +16,7 @@ Properties props = new Properties()
 props.load(new FileInputStream(file("gradle/version.properties")));
 ext.set("versions", props)
 
-project.version = "0.1.1"
+project.version = "0.2.0"
 
 allprojects {
     group = 'io.crate'
