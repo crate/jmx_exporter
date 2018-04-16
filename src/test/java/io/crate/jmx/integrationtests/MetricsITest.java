@@ -30,6 +30,7 @@ import java.net.HttpURLConnection;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public class MetricsITest extends AbstractITest {
 
@@ -44,17 +45,25 @@ public class MetricsITest extends AbstractITest {
 
     @Test
     public void testQueryStatsMetrics() {
-        assertThat(METRICS_RESPONSE, containsString("crate_query_duration_seconds{query=\"Select\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_query_duration_seconds{query=\"Update\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_query_duration_seconds{query=\"Delete\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_query_duration_seconds{query=\"Insert\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_query_duration_seconds{query=\"Overall\",} 0.0\n"));
+        assertMetricValue("crate_query_duration_seconds{query=\"Select\",} ");
+        assertMetricValue("crate_query_duration_seconds{query=\"Update\",} ");
+        assertMetricValue("crate_query_duration_seconds{query=\"Delete\",} ");
+        assertMetricValue("crate_query_duration_seconds{query=\"Insert\",} ");
+        assertMetricValue("crate_query_duration_seconds{query=\"Overall\",} ");
 
-        assertThat(METRICS_RESPONSE, containsString("crate_queries{query=\"Select\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_queries{query=\"Update\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_queries{query=\"Delete\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_queries{query=\"Insert\",} 0.0\n"));
-        assertThat(METRICS_RESPONSE, containsString("crate_queries{query=\"Overall\",}"));
+        assertMetricValue("crate_queries{query=\"Select\",} ");
+        assertMetricValue("crate_queries{query=\"Update\",} ");
+        assertMetricValue("crate_queries{query=\"Delete\",} ");
+        assertMetricValue("crate_queries{query=\"Insert\",} ");
+        assertMetricValue("crate_queries{query=\"Overall\",} ");
+    }
+
+    private void assertMetricValue(String metricString) {
+        int startIdx = METRICS_RESPONSE.indexOf(metricString);
+        assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));
+        int endIdx = METRICS_RESPONSE.indexOf("\n", startIdx);
+        String metricValueStr = METRICS_RESPONSE.substring(startIdx + metricString.length(), endIdx);
+        assertThat(metricValueStr.matches("\\d+.\\d+"), is(true));
     }
 
     @Test

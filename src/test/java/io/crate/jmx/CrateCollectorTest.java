@@ -29,13 +29,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Enumeration;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
 public class CrateCollectorTest {
@@ -53,8 +56,14 @@ public class CrateCollectorTest {
     @After
     public void unregisterMBean() throws Exception {
         CollectorRegistry.defaultRegistry.clear();
+        deregister(QueryStats.NAME);
+        deregister(CrateDummyStatus.NAME);
+        deregister(CrateDummyNodeInfo.NAME);
+    }
+
+    private void deregister(String name) throws MBeanRegistrationException, MalformedObjectNameException {
         try {
-            mbeanServer.unregisterMBean(new ObjectName(CrateDummyStatus.NAME));
+            mbeanServer.unregisterMBean(new ObjectName(name));
         } catch (InstanceNotFoundException ignored) {
         }
     }
@@ -135,9 +144,43 @@ public class CrateCollectorTest {
         assertThat(beanAttributeValueStorage.get("DummyStatus_SomethingEnabled"), is(false));
     }
 
+    @Test
+    public void testNodeInfoMBean() throws Exception {
+        mbeanServer.registerMBean(new CrateDummyNodeInfo(), new ObjectName(CrateDummyNodeInfo.NAME));
+
+        // metrics are collected while iterating on registered ones
+        Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
+        assertThat(metrics.hasMoreElements(), is(true));
+
+        Collector.MetricFamilySamples samples = metrics.nextElement();
+        assertThat(samples.name, is("crate_node_info"));
+
+        assertThat(samples.samples.size(), is(1));
+        Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, contains("id", "name"));
+        assertThat(sample.labelValues, contains("testNodeId", "testNodeName"));
+
+        assertThat(metrics.hasMoreElements(), is(false));
+    }
+
+    @Test
+    public void testNodeInfoResetsBeforeNextCollect() throws Exception {
+        mbeanServer.registerMBean(new CrateDummyNodeInfo(), new ObjectName(CrateDummyNodeInfo.NAME));
+
+        // Call collect multiple times
+        crateCollector.collect();
+        crateCollector.collect();
+
+        Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
+        assertThat(metrics.hasMoreElements(), is(true));
+        assertThat(metrics.nextElement().samples.size(), is(1)); // Only one sample
+    }
+
     public interface QueryStatsMBean {
 
         double getSelectQueryFrequency();
+
         double getSelectQueryAverageDuration();
     }
 
@@ -176,6 +219,28 @@ public class CrateCollectorTest {
         @Override
         public boolean isSomethingEnabled() {
             return boolValue;
+        }
+    }
+
+    public interface CrateDummyNodeInfoMBean {
+
+        String getNodeId();
+
+        String getNodeName();
+    }
+
+    private class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean{
+
+        static final String NAME = "io.crate.monitoring:type=NodeInfo";
+
+        @Override
+        public String getNodeId() {
+            return "testNodeId";
+        }
+
+        @Override
+        public String getNodeName() {
+            return "testNodeName";
         }
     }
 }

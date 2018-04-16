@@ -28,4 +28,16 @@ public interface Recorder {
      * Adds a MBean attribute as a metric sample to the given consumer.
      */
     boolean recordBean(String domain, String attrName, Number beanValue, MetricSampleConsumer metricSampleConsumer);
+
+    /**
+     * Adds a MBean attribute as a String label to the given consumer.
+     */
+    boolean recordBean(String domain, String attrName, String beanValue, MetricSampleConsumer metricSampleConsumer);
+
+
+    /**
+     * Clears any internal structures before new collect()
+     */
+    default void reset() {
+    }
 }

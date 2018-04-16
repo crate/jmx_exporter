@@ -82,6 +82,7 @@ public class CrateCollector extends Collector {
     @Override
     public List<MetricFamilySamples> collect() {
         metricFamilySamplesMap.clear();
+        RecorderRegistry.resetRecorders();
         for (ObjectName mBeanName : resolveMBeans()) {
             try {
                 MBeanInfo mBeanInfo = beanConn.getMBeanInfo(mBeanName);
@@ -150,16 +151,36 @@ public class CrateCollector extends Collector {
         }
         beanValueConsumer.accept(mBeanName + "_" + attrName, beanValue);
 
-        Number value;
         if (beanValue instanceof Number) {
-            value = ((Number) beanValue).doubleValue();
+            recordNumericMBeanValue(
+                    beanProperties,
+                    attrName,
+                    attrDescription,
+                    beanValue,
+                    mBeanName,
+                    ((Number) beanValue).doubleValue());
         } else if (beanValue instanceof Boolean) {
-            value = (Boolean) beanValue ? 1 : 0;
+            recordNumericMBeanValue(
+                    beanProperties,
+                    attrName,
+                    attrDescription,
+                    beanValue,
+                    mBeanName,
+                    (Boolean) beanValue ? 1 : 0);
+        } else if (beanValue instanceof String) {
+            recordStringMBeanValue(beanProperties, attrName, mBeanName, (String) beanValue);
         } else {
             LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
             return;
         }
+    }
 
+    private void recordNumericMBeanValue(LinkedHashMap<String, String> beanProperties,
+                                         String attrName,
+                                         String attrDescription,
+                                         Object beanValue,
+                                         String mBeanName,
+                                         Number value) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
@@ -172,6 +193,23 @@ public class CrateCollector extends Collector {
             // attrDescription tends not to be useful, so give the fully qualified name too.
             String help = attrDescription + " (" + beanName + attrName + ")";
             defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNTYPED);
+        }
+    }
+
+    private void recordStringMBeanValue(LinkedHashMap<String, String> beanProperties,
+                                         String attrName,
+                                         String mBeanName,
+                                         String value) {
+        Recorder recorder = RecorderRegistry.get(mBeanName);
+        if (recorder != null) {
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
+            if (supportedAttribute == false) {
+                LOGGER.log(Level.SEVERE,
+                        "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + value);
+            }
+        } else {
+            LOGGER.log(Level.SEVERE,
+                    "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + value);
         }
     }
 

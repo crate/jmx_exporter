@@ -35,6 +35,7 @@ public final class RecorderRegistry {
     static {
         REGISTRY.put(QueryStats.MBEAN_NAME, new QueryStats());
         REGISTRY.put(NodeStatus.MBEAN_NAME, new NodeStatus());
+        REGISTRY.put(NodeInfo.MBEAN_NAME, new NodeInfo());
     }
 
     public static Recorder get(String name) {
@@ -42,5 +43,9 @@ public final class RecorderRegistry {
     }
 
     private RecorderRegistry() {
+    }
+
+    public static void resetRecorders() {
+        REGISTRY.values().stream().forEach(Recorder::reset);
     }
 }
