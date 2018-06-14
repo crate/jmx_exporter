@@ -34,6 +34,8 @@ import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -59,6 +61,7 @@ public class CrateCollectorTest {
         deregister(QueryStats.NAME);
         deregister(CrateDummyStatus.NAME);
         deregister(CrateDummyNodeInfo.NAME);
+        deregister(Connections.NAME);
     }
 
     private void deregister(String name) throws MBeanRegistrationException, MalformedObjectNameException {
@@ -100,6 +103,42 @@ public class CrateCollectorTest {
         assertThat(sample.value, is(1.2));
         assertThat(sample.labelNames, hasItem(is("query")));
         assertThat(sample.labelValues, hasItem(is("Select")));
+    }
+
+    @Test
+    public void testConnectionsMBean() throws Exception {
+        mbeanServer.registerMBean(new Connections(), new ObjectName(Connections.NAME));
+        CollectorRegistry registry = CollectorRegistry.defaultRegistry;
+
+        Enumeration<Collector.MetricFamilySamples> metrics = registry.metricFamilySamples();
+
+        Collector.MetricFamilySamples samples = metrics.nextElement();
+        assertThat(metrics.hasMoreElements(), is(false));
+        assertThat(samples.name, is("crate_connections"));
+
+        // make test deterministic
+        samples.samples.sort(Comparator.comparing(c -> c.value));
+
+        Collector.MetricFamilySamples.Sample fst = samples.samples.get(0);
+        assertThat(fst.value, is(1.0d));
+        assertThat(fst.labelNames, is(Arrays.asList("protocol", "property")));
+        assertThat(fst.labelValues, is(Arrays.asList("http", "open")));
+
+        Collector.MetricFamilySamples.Sample snd = samples.samples.get(1);
+        assertThat(snd.value, is(2.0d));
+        assertThat(snd.labelValues, is(Arrays.asList("http", "total")));
+
+        Collector.MetricFamilySamples.Sample third = samples.samples.get(2);
+        assertThat(third.value, is(3.0d));
+        assertThat(third.labelValues, is(Arrays.asList("psql", "open")));
+
+        Collector.MetricFamilySamples.Sample fourth = samples.samples.get(3);
+        assertThat(fourth.value, is(4.0d));
+        assertThat(fourth.labelValues, is(Arrays.asList("psql", "total")));
+
+        Collector.MetricFamilySamples.Sample fifth = samples.samples.get(4);
+        assertThat(fifth.value, is(5.0d));
+        assertThat(fifth.labelValues, is(Arrays.asList("transport", "open")));
     }
 
     @Test
@@ -241,6 +280,49 @@ public class CrateCollectorTest {
         @Override
         public String getNodeName() {
             return "testNodeName";
+        }
+    }
+
+    public interface ConnectionsMBean {
+
+        long getHttpOpen();
+
+        long getHttpTotal();
+
+        long getPsqlOpen();
+
+        long getPsqlTotal();
+
+        long getTransportOpen();
+    }
+
+    private class Connections implements ConnectionsMBean {
+
+        static final String NAME = "io.crate.monitoring:type=Connections";
+
+        @Override
+        public long getHttpOpen() {
+            return 1;
+        }
+
+        @Override
+        public long getHttpTotal() {
+            return 2;
+        }
+
+        @Override
+        public long getPsqlOpen() {
+            return 3;
+        }
+
+        @Override
+        public long getPsqlTotal() {
+            return 4;
+        }
+
+        @Override
+        public long getTransportOpen() {
+            return 5;
         }
     }
 }

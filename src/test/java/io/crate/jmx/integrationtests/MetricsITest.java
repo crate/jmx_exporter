@@ -58,6 +58,15 @@ public class MetricsITest extends AbstractITest {
         assertMetricValue("crate_queries{query=\"Overall\",} ");
     }
 
+    @Test
+    public void testConnectionsMetrics() {
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
+    }
+
     private void assertMetricValue(String metricString) {
         int startIdx = METRICS_RESPONSE.indexOf(metricString);
         assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));

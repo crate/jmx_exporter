@@ -43,8 +43,7 @@ import java.util.Random;
 
 public abstract class AbstractITest extends RandomizedTest {
 
-    // TODO: remove this and use concrete version once v3.0.0 is released
-    private static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-3.0.0-201804160204-4a6efba.tar.gz";
+    private static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-3.1.0-201806180203-96e5f32.tar.gz";
     private static String[] CRATE_VERSIONS = new String[]{"latest"};
 
     private static final int JMX_HTTP_PORT = 17071;

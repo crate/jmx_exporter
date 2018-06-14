@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Added a new metric under ``/metrics`` endpoint which exposes the number of
+  open and total connections per protocol
+
 2018/04/16 0.2.0
 ================
 

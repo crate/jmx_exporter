@@ -30,12 +30,13 @@ import java.util.Map;
  */
 public final class RecorderRegistry {
 
-    private static Map<String, Recorder> REGISTRY = new HashMap<>();
+    private static final Map<String, Recorder> REGISTRY = new HashMap<>();
 
     static {
         REGISTRY.put(QueryStats.MBEAN_NAME, new QueryStats());
         REGISTRY.put(NodeStatus.MBEAN_NAME, new NodeStatus());
         REGISTRY.put(NodeInfo.MBEAN_NAME, new NodeInfo());
+        REGISTRY.put(Connections.MBEAN_NAME, new Connections());
     }
 
     public static Recorder get(String name) {
@@ -46,6 +47,6 @@ public final class RecorderRegistry {
     }
 
     public static void resetRecorders() {
-        REGISTRY.values().stream().forEach(Recorder::reset);
+        REGISTRY.values().forEach(Recorder::reset);
     }
 }
