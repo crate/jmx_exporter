@@ -3,12 +3,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'de.thetaphi:forbiddenapis:2.3'
+        classpath 'de.thetaphi:forbiddenapis:2.5'
     }
 }
 
 plugins {
-    id "com.github.spotbugs" version "1.6.0"
+    id "com.github.spotbugs" version "1.6.2"
     id "com.github.johnrengelman.shadow" version "2.0.2"
 }
 
