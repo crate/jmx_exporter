@@ -35,6 +35,8 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -133,7 +135,8 @@ public class CrateCollector extends Collector {
                                   Object value) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
-        } else if (value instanceof Number || value instanceof String || value instanceof Boolean) {
+        } else if (value instanceof Number || value instanceof String || value instanceof Boolean
+                   || value instanceof CompositeDataSupport) {
             logScrape(domain + beanProperties + attrName, value.toString());
             recordBean(beanProperties, attrName, attrDescription, value);
         } else {
@@ -169,6 +172,8 @@ public class CrateCollector extends Collector {
                     (Boolean) beanValue ? 1 : 0);
         } else if (beanValue instanceof String) {
             recordStringMBeanValue(beanProperties, attrName, mBeanName, (String) beanValue);
+        } else if (beanValue instanceof CompositeData) {
+            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue);
         } else {
             LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
             return;
@@ -197,9 +202,9 @@ public class CrateCollector extends Collector {
     }
 
     private void recordStringMBeanValue(LinkedHashMap<String, String> beanProperties,
-                                         String attrName,
-                                         String mBeanName,
-                                         String value) {
+                                        String attrName,
+                                        String mBeanName,
+                                        String value) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
@@ -210,6 +215,22 @@ public class CrateCollector extends Collector {
         } else {
             LOGGER.log(Level.SEVERE,
                     "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + value);
+        }
+    }
+
+    private void recordCompositeDataMBeanValue(String attrName,
+                                               String mBeanName,
+                                               CompositeData beanValue) {
+        Recorder recorder = RecorderRegistry.get(mBeanName);
+        if (recorder != null) {
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
+            if (supportedAttribute == false) {
+                LOGGER.log(Level.SEVERE,
+                        "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
+            }
+        } else {
+            LOGGER.log(Level.SEVERE,
+                    "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
         }
     }
 

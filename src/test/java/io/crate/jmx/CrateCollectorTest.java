@@ -33,6 +33,7 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+import java.beans.ConstructorProperties;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -62,6 +63,7 @@ public class CrateCollectorTest {
         deregister(CrateDummyStatus.NAME);
         deregister(CrateDummyNodeInfo.NAME);
         deregister(Connections.NAME);
+        deregister(ThreadPools.NAME);
     }
 
     private void deregister(String name) throws MBeanRegistrationException, MalformedObjectNameException {
@@ -216,6 +218,41 @@ public class CrateCollectorTest {
         assertThat(metrics.nextElement().samples.size(), is(1)); // Only one sample
     }
 
+    @Test
+    public void testThreadPoolsMXBean() throws Exception {
+        mbeanServer.registerMBean(new ThreadPools(), new ObjectName(ThreadPools.NAME));
+        CollectorRegistry registry = CollectorRegistry.defaultRegistry;
+
+        Enumeration<Collector.MetricFamilySamples> metrics = registry.metricFamilySamples();
+
+        Collector.MetricFamilySamples samples = metrics.nextElement();
+        assertThat(metrics.hasMoreElements(), is(false));
+        assertThat(samples.name, is("crate_threadpools"));
+
+        // make test deterministic
+        samples.samples.sort(Comparator.comparing(c -> c.labelValues.get(0) + c.labelValues.get(1)));
+
+        Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("generic", "active")));
+        assertThat(sample.value, is(4.0d));
+
+        sample = samples.samples.get(1);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("generic", "completed")));
+        assertThat(sample.value, is(20.0d));
+
+        sample = samples.samples.get(2);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("search", "active")));
+        assertThat(sample.value, is(2.0d));
+
+        sample = samples.samples.get(3);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("search", "completed")));
+        assertThat(sample.value, is(42.0d));
+    }
+
     public interface QueryStatsMBean {
 
         double getSelectQueryFrequency();
@@ -323,6 +360,55 @@ public class CrateCollectorTest {
         @Override
         public long getTransportOpen() {
             return 5;
+        }
+    }
+
+
+    public static class ThreadPoolInfo {
+
+        private final String name;
+        private final int active;
+        private final long completed;
+
+        @ConstructorProperties({"name", "active", "completed"})
+        public ThreadPoolInfo(String name, int active, long completed) {
+            this.name = name;
+            this.active = active;
+            this.completed = completed;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getActive() {
+            return active;
+        }
+
+        public long getCompleted() {
+            return completed;
+        }
+    }
+
+    public interface ThreadPoolsMXBean {
+
+        ThreadPoolInfo getGeneric();
+
+        ThreadPoolInfo getSearch();
+    }
+
+    public class ThreadPools implements ThreadPoolsMXBean {
+
+        public static final String NAME = "io.crate.monitoring:type=ThreadPools";
+
+        @Override
+        public ThreadPoolInfo getGeneric() {
+            return new ThreadPoolInfo("generic", 4, 20);
+        }
+
+        @Override
+        public ThreadPoolInfo getSearch() {
+            return new ThreadPoolInfo("search", 2, 42);
         }
     }
 }

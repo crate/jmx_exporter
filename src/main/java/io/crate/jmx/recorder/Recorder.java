@@ -22,6 +22,8 @@
 
 package io.crate.jmx.recorder;
 
+import javax.management.openmbean.CompositeData;
+
 public interface Recorder {
 
     /**
@@ -34,6 +36,13 @@ public interface Recorder {
      */
     boolean recordBean(String domain, String attrName, String beanValue, MetricSampleConsumer metricSampleConsumer);
 
+    default boolean recordBean(String domain,
+                               String attrName,
+                               CompositeData beanValue,
+                               MetricSampleConsumer metricSampleConsumer) {
+        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
+                                                " cannot be called with CompositeData bean value");
+    }
 
     /**
      * Clears any internal structures before new collect()

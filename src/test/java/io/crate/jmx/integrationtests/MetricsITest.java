@@ -26,6 +26,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
@@ -65,6 +67,20 @@ public class MetricsITest extends AbstractITest {
         assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
         assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
         assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
+    }
+
+    @Test
+    public void testThreadPoolsMetrics() {
+        List<String> poolNames = Arrays.asList(
+                "generic", "search", "get", "index", "snapshot", "management",
+                "listener", "flush", "refresh", "force_merge", "fetch_shard_started", "fetch_shard_store");
+        List<String> properties = Arrays.asList(
+                "poolSize", "largestPoolSize", "queueSize", "active", "completed", "rejected");
+        for (String poolName : poolNames) {
+            for (String property : properties) {
+                assertMetricValue("crate_threadpools{name=\""+poolName+"\",property=\""+property+"\",} ");
+            }
+        }
     }
 
     private void assertMetricValue(String metricString) {

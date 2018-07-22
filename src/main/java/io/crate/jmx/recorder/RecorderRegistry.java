@@ -37,6 +37,7 @@ public final class RecorderRegistry {
         REGISTRY.put(NodeStatus.MBEAN_NAME, new NodeStatus());
         REGISTRY.put(NodeInfo.MBEAN_NAME, new NodeInfo());
         REGISTRY.put(Connections.MBEAN_NAME, new Connections());
+        REGISTRY.put(ThreadPools.MBEAN_NAME, new ThreadPools());
     }
 
     public static Recorder get(String name) {
