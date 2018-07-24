@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2018/07/24 0.2.1
+================
+
 - Added a new metric under ``/metrics`` endpoint which exposes statistics of
   each thread pool.
 
