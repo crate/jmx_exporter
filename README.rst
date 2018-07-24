@@ -75,7 +75,7 @@ Looking for more help?
 - Chat with us on `Slack`_
 - Get `paid support`_
 
-.. _Download the jar: https://dl.bintray.com/crate/crate/io/crate/crate-jmx-exporter/0.2.0/crate-jmx-exporter-0.2.0.jar
+.. _Download the jar: https://dl.bintray.com/crate/crate/io/crate/crate-jmx-exporter/0.2.1/crate-jmx-exporter-0.2.1.jar
 .. _Enterprise Feature: https://crate.io/docs/crate/reference/en/latest/enterprise/index.html
 .. _JMX Monitoring: https://crate.io/docs/crate/reference/en/latest/admin/monitoring.html
 .. _Prometheus: https://prometheus.io/docs/instrumenting/writing_exporters/
