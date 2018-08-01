@@ -26,6 +26,7 @@ import io.prometheus.client.Collector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,8 +76,21 @@ public class NodeInfo implements Recorder {
                               String attrName,
                               Number beanValue,
                               MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(QueryStats.class.getSimpleName() + " cannot be called with Number " +
-                                                "bean value");
+        String fullname = domain + "_cluster_state_version";
+        boolean validAttribute = false;
+
+        if (attrName.equalsIgnoreCase("ClusterStateVersion")) {
+            metricSampleConsumer.accept(
+                    new Collector.MetricFamilySamples.Sample(
+                            fullname,
+                            Collections.emptyList(),
+                            Collections.emptyList(),
+                            (double) beanValue),
+                    Collector.Type.UNTYPED,
+                    "Cluster information.");
+            validAttribute = true;
+        }
+        return validAttribute;
     }
 
     @Override

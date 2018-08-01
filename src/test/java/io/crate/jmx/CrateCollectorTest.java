@@ -193,14 +193,21 @@ public class CrateCollectorTest {
         Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
         assertThat(metrics.hasMoreElements(), is(true));
 
-        Collector.MetricFamilySamples samples = metrics.nextElement();
-        assertThat(samples.name, is("crate_node_info"));
+        Collector.MetricFamilySamples nodeInfoSample = metrics.nextElement();
+        assertThat(nodeInfoSample.name, is("crate_node_info"));
 
-        assertThat(samples.samples.size(), is(1));
-        Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, contains("id", "name"));
-        assertThat(sample.labelValues, contains("testNodeId", "testNodeName"));
+        assertThat(nodeInfoSample.samples.size(), is(1));
+        Collector.MetricFamilySamples.Sample nodeSample = nodeInfoSample.samples.get(0);
+        assertThat(nodeSample.value, is(1.0));
+        assertThat(nodeSample.labelNames, contains("id", "name"));
+        assertThat(nodeSample.labelValues, contains("testNodeId", "testNodeName"));
+
+        assertThat(metrics.hasMoreElements(), is(true));
+
+        Collector.MetricFamilySamples clusterStateVersionSample = metrics.nextElement();
+        assertThat(clusterStateVersionSample.name, is("crate_cluster_state_version"));
+        Collector.MetricFamilySamples.Sample clusterStateSample = clusterStateVersionSample.samples.get(0);
+        assertThat(clusterStateSample.value, is(3.0));
 
         assertThat(metrics.hasMoreElements(), is(false));
     }
@@ -303,9 +310,11 @@ public class CrateCollectorTest {
         String getNodeId();
 
         String getNodeName();
+
+        long getClusterStateVersion();
     }
 
-    private class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean{
+    private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean{
 
         static final String NAME = "io.crate.monitoring:type=NodeInfo";
 
@@ -317,6 +326,11 @@ public class CrateCollectorTest {
         @Override
         public String getNodeName() {
             return "testNodeName";
+        }
+
+        @Override
+        public long getClusterStateVersion() {
+            return 3L;
         }
     }
 
@@ -333,7 +347,7 @@ public class CrateCollectorTest {
         long getTransportOpen();
     }
 
-    private class Connections implements ConnectionsMBean {
+    private static class Connections implements ConnectionsMBean {
 
         static final String NAME = "io.crate.monitoring:type=Connections";
 
@@ -397,9 +411,9 @@ public class CrateCollectorTest {
         ThreadPoolInfo getSearch();
     }
 
-    public class ThreadPools implements ThreadPoolsMXBean {
+    private static class ThreadPools implements ThreadPoolsMXBean {
 
-        public static final String NAME = "io.crate.monitoring:type=ThreadPools";
+        static final String NAME = "io.crate.monitoring:type=ThreadPools";
 
         @Override
         public ThreadPoolInfo getGeneric() {

@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Added a new metric under the ``/metrics`` endpoint which exposes the cluster
+  state version.
+
 2018/07/24 0.2.1
 ================
 
