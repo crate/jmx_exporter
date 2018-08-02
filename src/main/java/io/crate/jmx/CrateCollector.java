@@ -170,13 +170,10 @@ public class CrateCollector extends Collector {
                     beanValue,
                     mBeanName,
                     (Boolean) beanValue ? 1 : 0);
-        } else if (beanValue instanceof String) {
-            recordStringMBeanValue(beanProperties, attrName, mBeanName, (String) beanValue);
         } else if (beanValue instanceof CompositeData) {
             recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue);
         } else {
             LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
-            return;
         }
     }
 
@@ -198,23 +195,6 @@ public class CrateCollector extends Collector {
             // attrDescription tends not to be useful, so give the fully qualified name too.
             String help = attrDescription + " (" + beanName + attrName + ")";
             defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNTYPED);
-        }
-    }
-
-    private void recordStringMBeanValue(LinkedHashMap<String, String> beanProperties,
-                                        String attrName,
-                                        String mBeanName,
-                                        String value) {
-        Recorder recorder = RecorderRegistry.get(mBeanName);
-        if (recorder != null) {
-            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
-            if (supportedAttribute == false) {
-                LOGGER.log(Level.SEVERE,
-                        "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + value);
-            }
-        } else {
-            LOGGER.log(Level.SEVERE,
-                    "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + value);
         }
     }
 

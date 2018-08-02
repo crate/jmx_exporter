@@ -31,11 +31,6 @@ public interface Recorder {
      */
     boolean recordBean(String domain, String attrName, Number beanValue, MetricSampleConsumer metricSampleConsumer);
 
-    /**
-     * Adds a MBean attribute as a String label to the given consumer.
-     */
-    boolean recordBean(String domain, String attrName, String beanValue, MetricSampleConsumer metricSampleConsumer);
-
     default boolean recordBean(String domain,
                                String attrName,
                                CompositeData beanValue,

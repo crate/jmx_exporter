@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Removed the ``crate_node_info`` metric previously exposed under the
+  ``/metrics`` endpoint.
+
 - Added a new metric under the ``/metrics`` endpoint which exposes the cluster
   state version.
 

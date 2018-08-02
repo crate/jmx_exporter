@@ -41,7 +41,6 @@ import java.util.Enumeration;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
 public class CrateCollectorTest {
@@ -193,17 +192,6 @@ public class CrateCollectorTest {
         Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
         assertThat(metrics.hasMoreElements(), is(true));
 
-        Collector.MetricFamilySamples nodeInfoSample = metrics.nextElement();
-        assertThat(nodeInfoSample.name, is("crate_node_info"));
-
-        assertThat(nodeInfoSample.samples.size(), is(1));
-        Collector.MetricFamilySamples.Sample nodeSample = nodeInfoSample.samples.get(0);
-        assertThat(nodeSample.value, is(1.0));
-        assertThat(nodeSample.labelNames, contains("id", "name"));
-        assertThat(nodeSample.labelValues, contains("testNodeId", "testNodeName"));
-
-        assertThat(metrics.hasMoreElements(), is(true));
-
         Collector.MetricFamilySamples clusterStateVersionSample = metrics.nextElement();
         assertThat(clusterStateVersionSample.name, is("crate_cluster_state_version"));
         Collector.MetricFamilySamples.Sample clusterStateSample = clusterStateVersionSample.samples.get(0);
@@ -307,26 +295,12 @@ public class CrateCollectorTest {
 
     public interface CrateDummyNodeInfoMBean {
 
-        String getNodeId();
-
-        String getNodeName();
-
         long getClusterStateVersion();
     }
 
-    private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean{
+    private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean {
 
         static final String NAME = "io.crate.monitoring:type=NodeInfo";
-
-        @Override
-        public String getNodeId() {
-            return "testNodeId";
-        }
-
-        @Override
-        public String getNodeName() {
-            return "testNodeName";
-        }
 
         @Override
         public long getClusterStateVersion() {

@@ -65,15 +65,6 @@ public class QueryStats implements Recorder {
         return false;
     }
 
-    @Override
-    public boolean recordBean(String domain,
-                              String attrName,
-                              String beanValue,
-                              MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(QueryStats.class.getSimpleName() + " cannot be called with String " +
-                                                "bean value");
-    }
-
     private static void recordBean(String domain,
                                    String attrName,
                                    String labelValue,

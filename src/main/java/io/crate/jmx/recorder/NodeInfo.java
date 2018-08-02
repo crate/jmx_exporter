@@ -24,52 +24,11 @@ package io.crate.jmx.recorder;
 
 import io.prometheus.client.Collector;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class NodeInfo implements Recorder {
 
     static final String MBEAN_NAME = "NodeInfo";
-
-    private static final String NODE_ID_LABEL = "id";
-    private static final String NODE_NAME_LABEL = "name";
-    private static final List<String> LABEL_NAMES = Arrays.asList(NODE_ID_LABEL, NODE_NAME_LABEL);
-    private static final Map<String, String> LABEL_VALUES = new HashMap<>(2);
-
-    @Override
-    public boolean recordBean(String domain,
-                              String attrName,
-                              String beanValue,
-                              MetricSampleConsumer metricSampleConsumer) {
-        String fullname = domain + "_node_info";
-        boolean validAttribute = false;
-
-        if (attrName.equalsIgnoreCase("NodeId")) {
-            LABEL_VALUES.put(NODE_ID_LABEL, beanValue);
-            validAttribute = true;
-        } else if (attrName.equalsIgnoreCase("NodeName")) {
-            LABEL_VALUES.put(NODE_NAME_LABEL, beanValue);
-            validAttribute = true;
-        }
-        if (LABEL_VALUES.size() == 2) {
-            List<String> labelValues = new ArrayList<>(2);
-            labelValues.add(LABEL_VALUES.get(NODE_ID_LABEL));
-            labelValues.add(LABEL_VALUES.get(NODE_NAME_LABEL));
-            metricSampleConsumer.accept(
-                    new Collector.MetricFamilySamples.Sample(
-                            fullname,
-                            LABEL_NAMES,
-                            labelValues,
-                            1.0),
-                    Collector.Type.UNTYPED,
-                    "Node information.");
-        }
-        return validAttribute;
-    }
 
     @Override
     public boolean recordBean(String domain,
@@ -91,10 +50,5 @@ public class NodeInfo implements Recorder {
             validAttribute = true;
         }
         return validAttribute;
-    }
-
-    @Override
-    public void reset() {
-        LABEL_VALUES.clear();
     }
 }

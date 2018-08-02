@@ -61,13 +61,4 @@ public final class Connections implements Recorder {
         );
         return true;
     }
-
-    @Override
-    public boolean recordBean(String domain,
-                              String attrName,
-                              String beanValue,
-                              MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(
-                Connections.class.getSimpleName() + " cannot be called with String bean value");
-    }
 }
