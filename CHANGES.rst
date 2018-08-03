@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2018/08/03 0.3.0
+================
+
 - Removed the ``crate_node_info`` metric previously exposed under the
   ``/metrics`` endpoint.
 
