@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Added a new metric under ``/metrics`` endpoint which exposes statistics of
+  each circuit breaker.
+
 2018/08/03 0.3.0
 ================
 

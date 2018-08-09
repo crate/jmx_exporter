@@ -63,6 +63,7 @@ public class CrateCollectorTest {
         deregister(CrateDummyNodeInfo.NAME);
         deregister(Connections.NAME);
         deregister(ThreadPools.NAME);
+        deregister(CircuitBreakers.NAME);
     }
 
     private void deregister(String name) throws MBeanRegistrationException, MalformedObjectNameException {
@@ -248,6 +249,41 @@ public class CrateCollectorTest {
         assertThat(sample.value, is(42.0d));
     }
 
+    @Test
+    public void testCircuitBreakersMXBean() throws Exception {
+        mbeanServer.registerMBean(new CircuitBreakers(), new ObjectName(CircuitBreakers.NAME));
+        CollectorRegistry registry = CollectorRegistry.defaultRegistry;
+
+        Enumeration<Collector.MetricFamilySamples> metrics = registry.metricFamilySamples();
+
+        Collector.MetricFamilySamples samples = metrics.nextElement();
+        assertThat(metrics.hasMoreElements(), is(false));
+        assertThat(samples.name, is("crate_circuitbreakers"));
+
+        // make test deterministic
+        samples.samples.sort(Comparator.comparing(c -> c.labelValues.get(0) + c.labelValues.get(1)));
+
+        Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("parent", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(1);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("parent", "used")));
+        assertThat(sample.value, is(42d));
+
+        sample = samples.samples.get(2);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("query", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(3);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("query", "used")));
+        assertThat(sample.value, is(22.0d));
+    }
+
     public interface QueryStatsMBean {
 
         double getSelectQueryFrequency();
@@ -397,6 +433,59 @@ public class CrateCollectorTest {
         @Override
         public ThreadPoolInfo getSearch() {
             return new ThreadPoolInfo("search", 2, 42);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public interface CircuitBreakersMXBean {
+
+        CircuitBreakers.Stats getParent();
+
+        CircuitBreakers.Stats getQuery();
+    }
+
+    private static class CircuitBreakers implements CircuitBreakersMXBean {
+
+        static final String NAME = "io.crate.monitoring:type=CircuitBreakers";
+
+        public static class Stats {
+
+            private final String name;
+            private final long limit;
+            private final long used;
+
+            @SuppressWarnings("WeakerAccess")
+            @ConstructorProperties({"name", "limit", "used"})
+            public Stats(String name, long limit, long used) {
+                this.name = name;
+                this.limit = limit;
+                this.used = used;
+            }
+
+            @SuppressWarnings("unused")
+            public String getName() {
+                return name;
+            }
+
+            @SuppressWarnings("unused")
+            public long getLimit() {
+                return limit;
+            }
+
+            @SuppressWarnings("unused")
+            public long getUsed() {
+                return used;
+            }
+        }
+
+        @Override
+        public Stats getParent() {
+            return new Stats("parent", 123456, 42);
+        }
+
+        @Override
+        public Stats getQuery() {
+            return new Stats("query", 123456, 22);
         }
     }
 }

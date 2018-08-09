@@ -83,12 +83,25 @@ public class MetricsITest extends AbstractITest {
         }
     }
 
+    @Test
+    public void testCircuitBreakersMetrics() {
+        List<String> names = Arrays.asList(
+                "parent", "query", "jobs_log", "operations_log", "fielddata", "request", "in_flight_requests");
+        List<String> properties = Arrays.asList(
+                "limit", "used", "trippedCount", "overhead");
+        for (String name : names) {
+            for (String property : properties) {
+                assertMetricValue("crate_circuitbreakers{name=\""+name+"\",property=\""+property+"\",} ");
+            }
+        }
+    }
+
     private void assertMetricValue(String metricString) {
         int startIdx = METRICS_RESPONSE.indexOf(metricString);
         assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));
         int endIdx = METRICS_RESPONSE.indexOf("\n", startIdx);
         String metricValueStr = METRICS_RESPONSE.substring(startIdx + metricString.length(), endIdx);
-        assertThat(metricValueStr.matches("\\d+.\\d+"), is(true));
+        assertThat(metricValueStr.matches("\\d+.\\d+(E\\d)?"), is(true));
     }
 
     @Test
