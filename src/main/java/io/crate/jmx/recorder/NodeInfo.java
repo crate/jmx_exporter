@@ -44,7 +44,7 @@ public class NodeInfo implements Recorder {
                             fullname,
                             Collections.emptyList(),
                             Collections.emptyList(),
-                            (double) beanValue),
+                            beanValue.doubleValue()),
                     Collector.Type.UNTYPED,
                     "Cluster information.");
             validAttribute = true;
