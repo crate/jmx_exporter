@@ -43,8 +43,8 @@ import java.util.Random;
 
 public abstract class AbstractITest extends RandomizedTest {
 
-    private static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-3.1.0-201808100203-a254e2f.tar.gz";
-    private static String[] CRATE_VERSIONS = new String[]{"latest"};
+    private static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/crate-3.1.0.tar.gz";
+    private static String[] CRATE_VERSIONS = new String[]{"3.1.0"};
 
     private static final int JMX_HTTP_PORT = 17071;
 
@@ -67,7 +67,6 @@ public abstract class AbstractITest extends RandomizedTest {
         String version = getRandomServerVersion();
         CrateTestCluster.Builder builder;
 
-        // TODO: remove the latest branch and use concrete version once v3.0.0 is released
         if (version.equals("latest") && System.getenv().get("CRATE_VERSION") == null) {
             builder = CrateTestCluster.fromURL(LATEST_URL);
         } else {
