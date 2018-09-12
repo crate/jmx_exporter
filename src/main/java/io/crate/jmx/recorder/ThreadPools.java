@@ -36,15 +36,6 @@ public class ThreadPools implements Recorder {
     @Override
     public boolean recordBean(String domain,
                               String attrName,
-                              Number beanValue,
-                              MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(ThreadPools.class.getSimpleName() + " cannot be called with Numeric " +
-                                                "bean value");
-    }
-
-    @Override
-    public boolean recordBean(String domain,
-                              String attrName,
                               CompositeData beanValue,
                               MetricSampleConsumer metricSampleConsumer) {
         Set<String> names = beanValue.getCompositeType().keySet();

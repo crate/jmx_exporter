@@ -29,7 +29,13 @@ public interface Recorder {
     /**
      * Adds a MBean attribute as a metric sample to the given consumer.
      */
-    boolean recordBean(String domain, String attrName, Number beanValue, MetricSampleConsumer metricSampleConsumer);
+    default boolean recordBean(String domain,
+                               String attrName,
+                               Number beanValue,
+                               MetricSampleConsumer metricSampleConsumer) {
+        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
+                                                " cannot be called with Numeric bean value");
+    }
 
     default boolean recordBean(String domain,
                                String attrName,

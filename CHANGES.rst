@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Don't create log warning entries for ``crate_node_info`` attributes that are
+  ignored by intend.
+
 - Added a new metric under ``/metrics`` endpoint which exposes statistics of
   each circuit breaker.
 

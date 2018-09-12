@@ -198,6 +198,7 @@ public class CrateCollectorTest {
         Collector.MetricFamilySamples.Sample clusterStateSample = clusterStateVersionSample.samples.get(0);
         assertThat(clusterStateSample.value, is(3.0));
 
+        // all string attributes of the NodeInfo MBean are ignored by intend, so no more elements must exists.
         assertThat(metrics.hasMoreElements(), is(false));
     }
 
@@ -332,6 +333,8 @@ public class CrateCollectorTest {
     public interface CrateDummyNodeInfoMBean {
 
         long getClusterStateVersion();
+
+        String getNodeId();
     }
 
     private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean {
@@ -341,6 +344,11 @@ public class CrateCollectorTest {
         @Override
         public long getClusterStateVersion() {
             return 3L;
+        }
+
+        @Override
+        public String getNodeId() {
+            return "node1";
         }
     }
 

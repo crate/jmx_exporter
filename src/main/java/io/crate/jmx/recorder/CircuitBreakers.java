@@ -34,12 +34,6 @@ public class CircuitBreakers implements Recorder {
     static final String MBEAN_NAME = "CircuitBreakers";
 
     @Override
-    public boolean recordBean(String domain, String attrName, Number beanValue, MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(CircuitBreakers.class.getSimpleName() + " cannot be called with Numeric " +
-                                                "bean value");
-    }
-
-    @Override
     public boolean recordBean(String domain, String attrName, CompositeData beanValue, MetricSampleConsumer metricSampleConsumer) {
         Set<String> names = beanValue.getCompositeType().keySet();
         String name = ((String) beanValue.get("name")).toLowerCase(Locale.ENGLISH);

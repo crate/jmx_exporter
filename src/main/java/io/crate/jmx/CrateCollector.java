@@ -172,7 +172,8 @@ public class CrateCollector extends Collector {
                     (Boolean) beanValue ? 1 : 0);
         } else if (beanValue instanceof CompositeData) {
             recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue);
-        } else {
+        } else if ((beanValue instanceof String) == false) {
+            // only log on non-string values, string values are ignored by intend
             LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
         }
     }
