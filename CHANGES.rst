@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2018/09/12 0.4.0
+================
+
 - Don't create log warning entries for ``crate_node_info`` attributes that are
   ignored by intend.
 
