@@ -45,11 +45,15 @@ plain text. The text format is following the exporter format used by `Prometheus
 /ready
 ~~~~~~
 
-This endpoint will return a HTTP status code only, no content is returned.
-The status code indicates if the CrateDB node is able to process SQL
-statements. This could not be the case e.g. when a node is gracefully shutdown.
-The readiness endpoint can be usefull for load blancers to know when to remove a
-node from the pool.
+This endpoint will return a HTTP status. The status code indicates whether the
+*individual* node is ready to accept statements.
+
+If statements can be processed successfully also depends on the cluster state,
+but this endpoint *doesn't* take the cluster state into consideration.
+
+The main use-case for this endpoint is to use it with load-balancers. If a node
+is gracefully stopped, this endpoint will start returning ``503``, allowing the
+load-balancer to remove the node.
 
 Status codes:
 
