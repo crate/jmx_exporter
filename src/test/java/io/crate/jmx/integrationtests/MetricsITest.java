@@ -101,7 +101,11 @@ public class MetricsITest extends AbstractITest {
         assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));
         int endIdx = METRICS_RESPONSE.indexOf("\n", startIdx);
         String metricValueStr = METRICS_RESPONSE.substring(startIdx + metricString.length(), endIdx);
-        assertThat(metricValueStr.matches("\\d+.\\d+(E\\d)?"), is(true));
+        assertThat(
+                metricValueStr + " must be in the format \\d+.\\d+(E\\d+)?",
+                metricValueStr.matches("\\d+.\\d+(E\\d+)?"),
+                is(true)
+        );
     }
 
     @Test
