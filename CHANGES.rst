@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Added new ``QueryStats`` metrics reporting the total number of statements and
+  the sum of statements execution durations grouped by statement type.
+
 2018/09/12 0.4.0
 ================
 

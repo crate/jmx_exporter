@@ -58,6 +58,24 @@ public class MetricsITest extends AbstractITest {
         assertMetricValue("crate_queries{query=\"Delete\",} ");
         assertMetricValue("crate_queries{query=\"Insert\",} ");
         assertMetricValue("crate_queries{query=\"Overall\",} ");
+
+        assertMetricValue("crate_query_total_count{query=\"Select\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Update\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Delete\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Insert\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Management\",} ");
+        assertMetricValue("crate_query_total_count{query=\"DDL\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Copy\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Undefined\",} ");
+
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Select\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Update\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Delete\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Insert\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Management\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"DDL\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Copy\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Undefined\",} ");
     }
 
     @Test

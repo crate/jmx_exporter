@@ -34,6 +34,8 @@ public class QueryStats implements Recorder {
 
     private static final Pattern QUERIES_PER_SECONDS_PATTERN = Pattern.compile("(.+)QueryFrequency");
     private static final Pattern QUERIES_DURATION_PATTERN = Pattern.compile("(.+)QueryAverageDuration");
+    private static final Pattern QUERIES_TOTAL_COUNT_PATTERN = Pattern.compile("(.+)QueryTotalCount");
+    private static final Pattern QUERIES_SUM_OF_DURATIONS_PATTERN = Pattern.compile("(.+)QuerySumOfDurations");
 
     @Override
     public boolean recordBean(String domain,
@@ -59,6 +61,28 @@ public class QueryStats implements Recorder {
                     matcher.group(1),
                     beanValue,
                     "The average query duration for a given query type.",
+                    metricSampleConsumer);
+            return true;
+        }
+        matcher = QUERIES_TOTAL_COUNT_PATTERN.matcher(attrName);
+        if (matcher.matches()) {
+            recordBean(
+                    domain,
+                    "query_total_count",
+                    matcher.group(1),
+                    beanValue,
+                    "The total number of queries that were executed for a given query type.",
+                    metricSampleConsumer);
+            return true;
+        }
+        matcher = QUERIES_SUM_OF_DURATIONS_PATTERN.matcher(attrName);
+        if (matcher.matches()) {
+            recordBean(
+                    domain,
+                    "query_sum_of_durations_millis",
+                    matcher.group(1),
+                    beanValue,
+                    "The sum of durations of all executed queries of a given type, expressed in milliseconds.",
                     metricSampleConsumer);
             return true;
         }
