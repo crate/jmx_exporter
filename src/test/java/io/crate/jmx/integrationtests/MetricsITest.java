@@ -68,6 +68,15 @@ public class MetricsITest extends AbstractITest {
         assertMetricValue("crate_query_total_count{query=\"Copy\",} ");
         assertMetricValue("crate_query_total_count{query=\"Undefined\",} ");
 
+        assertMetricValue("crate_query_failed_count{query=\"Select\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Update\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Delete\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Insert\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Management\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"DDL\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Copy\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Undefined\",} ");
+
         assertMetricValue("crate_query_sum_of_durations_millis{query=\"Select\",} ");
         assertMetricValue("crate_query_sum_of_durations_millis{query=\"Update\",} ");
         assertMetricValue("crate_query_sum_of_durations_millis{query=\"Delete\",} ");

@@ -35,6 +35,7 @@ public class QueryStats implements Recorder {
     private static final Pattern QUERIES_PER_SECONDS_PATTERN = Pattern.compile("(.+)QueryFrequency");
     private static final Pattern QUERIES_DURATION_PATTERN = Pattern.compile("(.+)QueryAverageDuration");
     private static final Pattern QUERIES_TOTAL_COUNT_PATTERN = Pattern.compile("(.+)QueryTotalCount");
+    private static final Pattern QUERIES_FAILED_COUNT_PATTERN = Pattern.compile("(.+)QueryFailedCount");
     private static final Pattern QUERIES_SUM_OF_DURATIONS_PATTERN = Pattern.compile("(.+)QuerySumOfDurations");
 
     @Override
@@ -72,6 +73,17 @@ public class QueryStats implements Recorder {
                     matcher.group(1),
                     beanValue,
                     "The total number of queries that were executed for a given query type.",
+                    metricSampleConsumer);
+            return true;
+        }
+        matcher = QUERIES_FAILED_COUNT_PATTERN.matcher(attrName);
+        if (matcher.matches()) {
+            recordBean(
+                    domain,
+                    "query_failed_count",
+                    matcher.group(1),
+                    beanValue,
+                    "The total number of queries that failed to complete successfully for a given query type.",
                     metricSampleConsumer);
             return true;
         }
