@@ -5,6 +5,11 @@
 Unreleased
 ==========
 
+Breaking changes
+================
+
+- Dropped support for java <11
+
 2019/02/18 0.6.0
 ================
 

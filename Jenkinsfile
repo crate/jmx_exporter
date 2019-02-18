@@ -4,7 +4,7 @@ pipeline {
     stage('Test') {
       agent { label 'medium' }
       tools {
-        jdk 'jdk8'
+        jdk 'jdk11'
       }
       steps {
         step([$class: 'WsCleanup'])

@@ -3,13 +3,13 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'de.thetaphi:forbiddenapis:2.5'
+        classpath 'de.thetaphi:forbiddenapis:2.6'
     }
 }
 
 plugins {
-    id "com.github.spotbugs" version "1.6.2"
-    id "com.github.johnrengelman.shadow" version "2.0.2"
+    id "com.github.spotbugs" version "1.6.10"
+    id "com.github.johnrengelman.shadow" version "4.0.4"
 }
 
 Properties props = new Properties()
@@ -38,8 +38,8 @@ allprojects {
         jcenter()
     }
 
-    sourceCompatibility = "8"
-    targetCompatibility = "8"
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
 }
 
 dependencies {
@@ -55,13 +55,11 @@ dependencies {
         exclude group: 'junit', module: 'junit'
     }
     // gradle does not include tools.jar by default
-    testCompile files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
+    testCompile files("${System.getProperty('java.home')}/../lib/tools.jar")
 }
 
-
-
 jacoco {
-    toolVersion = "0.8.0"
+    toolVersion = "0.8.2"
 }
 
 spotbugs {
@@ -158,8 +156,8 @@ forbiddenApisMain {
     ignoreFailures = false
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+wrapper {
+    gradleVersion = '5.2.1'
 }
 
 shadowJar {
@@ -189,14 +187,7 @@ jar {
     actions = [] // Do nothing, build shadedJar instead
 }
 
-task buildJar(type: Jar, dependsOn: [classes]) {
-    doLast {
-        tasks.shadowJar.execute()
-    }
-}
-tasks.buildJar.mustRunAfter jar // otherwise jar task would override shadowJar artifact
-
-test.dependsOn(dependsOn: [buildJar])   // JAR is needed by integration tests
+test.dependsOn(dependsOn: [jar])   // JAR is needed by integration tests
 
 
 task myJavadocs(type: Javadoc, dependsOn: processResources) {
@@ -212,10 +203,6 @@ task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
     }
 }
 
-task buildJavadocJar (dependsOn: [myJavadocs] ) << {
-    tasks.javadocJar.execute()
-}
-
 task sourceJar (type : Jar) {
     classifier = 'sources'
     from sourceSets.main.allSource
@@ -224,18 +211,13 @@ task sourceJar (type : Jar) {
     }
 }
 
-task buildSourceJar () << {
-    tasks.sourceJar.execute()
-}
-
-
 artifacts {
     archives jar
     archives javadocJar
     archives sourceJar
 }
 
-task signJars (type : Sign, dependsOn: [jar, buildJavadocJar, buildSourceJar]) {
+task signJars (type : Sign, dependsOn: [jar, javadocJar, sourceJar]) {
     sign configurations.archives
 }
 
