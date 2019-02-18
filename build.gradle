@@ -103,6 +103,12 @@ sourceSets {
 
 def jvmTestFlags = ['-ea']
 
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
 idea {
     workspace {
         iws.withXml { xmlFile ->
