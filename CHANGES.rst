@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2019/02/18 0.6.0
+================
+
 - Added a new ``QueryStats`` metric reporting the number of statements that
   did not complete successfully.
 
