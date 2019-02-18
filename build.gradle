@@ -16,6 +16,8 @@ Properties props = new Properties()
 props.load(new FileInputStream(file("gradle/version.properties")));
 ext.set("versions", props)
 
+// Please reflect the version change in ``README.rst`` to point to what will be
+// the newly released version.
 project.version = "0.6.0"
 
 allprojects {
