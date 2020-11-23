@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Added new shard related metrics to ``NodeInfo`` reporting detailed information
+  about the shards located on the node.
+
 Breaking changes
 ================
 

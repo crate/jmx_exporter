@@ -38,6 +38,7 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
@@ -287,6 +288,47 @@ public class CrateCollectorTest {
         Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
         assertThat(metrics.hasMoreElements(), is(true));
 
+        Collector.MetricFamilySamples shardStats = metrics.nextElement();
+        assertThat(shardStats.name, is("crate_node"));
+
+        // make test deterministic
+        shardStats.samples.sort(Comparator.comparing(c -> String.join("", c.labelValues)));
+
+        var shardStatsInfo = shardStats.samples.get(0);
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "test", "p1")));
+        assertThat(shardStatsInfo.value, is(100.0));
+
+        shardStatsInfo = shardStats.samples.get(1);
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "test", "p1")));
+        assertThat(shardStatsInfo.value, is(500.0));
+
+        shardStatsInfo = shardStats.samples.get(2);
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "test", "")));
+        assertThat(shardStatsInfo.value, is(1000.0));
+
+        Collector.MetricFamilySamples.Sample shardStatsSample = shardStats.samples.get(3);
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
+        assertThat(shardStatsSample.labelValues, is(Arrays.asList("shard_stats", "primaries")));
+        assertThat(shardStatsSample.value, is(1.0));
+
+        shardStatsSample = shardStats.samples.get(4);
+        assertThat(shardStatsSample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(shardStatsSample.labelValues, is(Arrays.asList("shard_stats", "replicas")));
+        assertThat(shardStatsSample.value, is(2.0));
+
+        shardStatsSample = shardStats.samples.get(5);
+        assertThat(shardStatsSample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(shardStatsSample.labelValues, is(Arrays.asList("shard_stats", "total")));
+        assertThat(shardStatsSample.value, is(3.0));
+
+        shardStatsSample = shardStats.samples.get(6);
+        assertThat(shardStatsSample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(shardStatsSample.labelValues, is(Arrays.asList("shard_stats", "unassigned")));
+        assertThat(shardStatsSample.value, is(0.0));
+
         Collector.MetricFamilySamples clusterStateVersionSample = metrics.nextElement();
         assertThat(clusterStateVersionSample.name, is("crate_cluster_state_version"));
         Collector.MetricFamilySamples.Sample clusterStateSample = clusterStateVersionSample.samples.get(0);
@@ -306,7 +348,7 @@ public class CrateCollectorTest {
 
         Enumeration<Collector.MetricFamilySamples> metrics = CollectorRegistry.defaultRegistry.metricFamilySamples();
         assertThat(metrics.hasMoreElements(), is(true));
-        assertThat(metrics.nextElement().samples.size(), is(1)); // Only one sample
+        assertThat(metrics.nextElement().samples.size(), is(7));
     }
 
     @Test
@@ -647,14 +689,19 @@ public class CrateCollectorTest {
         }
     }
 
-    public interface CrateDummyNodeInfoMBean {
+    public interface CrateDummyNodeInfoMXBean {
 
         long getClusterStateVersion();
 
         String getNodeId();
+
+        ShardStats getShardStats();
+
+        List<ShardInfo> getShardInfo();
+
     }
 
-    private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMBean {
+    private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMXBean {
 
         static final String NAME = "io.crate.monitoring:type=NodeInfo";
 
@@ -666,6 +713,97 @@ public class CrateCollectorTest {
         @Override
         public String getNodeId() {
             return "node1";
+        }
+
+        public ShardStats getShardStats() {
+            return new ShardStats(3, 1, 2, 0, 0);
+        }
+
+        public List<ShardInfo> getShardInfo() {
+            return List.of(
+                    new ShardInfo(1, "test", "p1", "STARTED", "STARTED", 100),
+                    new ShardInfo(2, "test", "p1", "STARTED", "STARTED", 500),
+                    new ShardInfo(3, "test", "", "STARTED", "STARTED", 1000)
+            );
+        }
+    }
+
+    public static class ShardStats {
+
+        final int total;
+
+        final int primaries;
+
+        final int replicas;
+
+        final int unassigned;
+
+        @ConstructorProperties({"total", "primaries", "replicas", "unassigned"})
+        public ShardStats(int total, int primaries, int replicas, int unassigned, int recovering) {
+            this.total = total;
+            this.primaries = primaries;
+            this.replicas = replicas;
+            this.unassigned = unassigned;
+        }
+
+        public int getTotal() {
+            return total;
+        }
+
+        public int getPrimaries() {
+            return primaries;
+        }
+
+        public int getReplicas() {
+            return replicas;
+        }
+
+        public int getUnassigned() {
+            return unassigned;
+        }
+
+    }
+
+    public static class ShardInfo {
+        final int shardId;
+        final String routingState;
+        final String state;
+        final String table;
+        final String partitionIdent;
+        final long size;
+
+        @ConstructorProperties({"shardId", "table", "partitionIdent", "routingState", "state", "size"})
+        public ShardInfo(int shardId, String table, String partitionIdent, String routingState, String state, long size) {
+            this.shardId = shardId;
+            this.routingState = routingState;
+            this.state = state;
+            this.table = table;
+            this.partitionIdent = partitionIdent;
+            this.size = size;
+        }
+
+        public int getShardId() {
+            return shardId;
+        }
+
+        public String getTable() {
+            return table;
+        }
+
+        public String getRoutingState() {
+            return routingState;
+        }
+
+        public String getState() {
+            return state;
+        }
+
+        public long getSize() {
+            return size;
+        }
+
+        public String getPartitionIdent() {
+            return partitionIdent;
         }
     }
 
