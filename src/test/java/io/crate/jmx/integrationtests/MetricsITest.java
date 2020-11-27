@@ -47,18 +47,6 @@ public class MetricsITest extends AbstractITest {
 
     @Test
     public void testQueryStatsMetrics() {
-        assertMetricValue("crate_query_duration_seconds{query=\"Select\",} ");
-        assertMetricValue("crate_query_duration_seconds{query=\"Update\",} ");
-        assertMetricValue("crate_query_duration_seconds{query=\"Delete\",} ");
-        assertMetricValue("crate_query_duration_seconds{query=\"Insert\",} ");
-        assertMetricValue("crate_query_duration_seconds{query=\"Overall\",} ");
-
-        assertMetricValue("crate_queries{query=\"Select\",} ");
-        assertMetricValue("crate_queries{query=\"Update\",} ");
-        assertMetricValue("crate_queries{query=\"Delete\",} ");
-        assertMetricValue("crate_queries{query=\"Insert\",} ");
-        assertMetricValue("crate_queries{query=\"Overall\",} ");
-
         assertMetricValue("crate_query_total_count{query=\"Select\",} ");
         assertMetricValue("crate_query_total_count{query=\"Update\",} ");
         assertMetricValue("crate_query_total_count{query=\"Delete\",} ");
@@ -99,7 +87,7 @@ public class MetricsITest extends AbstractITest {
     @Test
     public void testThreadPoolsMetrics() {
         List<String> poolNames = Arrays.asList(
-                "generic", "search", "get", "index", "snapshot", "management",
+                "generic", "search", "get", "snapshot", "management", "write",
                 "listener", "flush", "refresh", "force_merge", "fetch_shard_started", "fetch_shard_store");
         List<String> properties = Arrays.asList(
                 "poolSize", "largestPoolSize", "queueSize", "active", "completed", "rejected");
@@ -129,8 +117,8 @@ public class MetricsITest extends AbstractITest {
         int endIdx = METRICS_RESPONSE.indexOf("\n", startIdx);
         String metricValueStr = METRICS_RESPONSE.substring(startIdx + metricString.length(), endIdx);
         assertThat(
-                metricValueStr + " must be in the format \\d+.\\d+(E\\d+)?",
-                metricValueStr.matches("\\d+.\\d+(E\\d+)?"),
+                String.format("Metric '%s' value '%s' must be in the format ^-\\d+.\\d+(E\\d+)?", metricString, metricValueStr),
+                metricValueStr.matches("^-?\\d+.\\d+(E\\d+)?"),
                 is(true)
         );
     }
@@ -161,33 +149,33 @@ public class MetricsITest extends AbstractITest {
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"CodeHeap 'non-profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"Metaspace\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"Compressed Class Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"Par Eden Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"Par Survivor Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"CMS Old Gen\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"G1 Eden Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"G1 Survivor Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_used{pool=\"G1 Old Gen\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"CodeHeap 'non-profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"Metaspace\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"Compressed Class Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"Par Eden Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"Par Survivor Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"CMS Old Gen\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"G1 Eden Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"G1 Survivor Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_committed{pool=\"G1 Old Gen\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"CodeHeap 'non-nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"CodeHeap 'profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"CodeHeap 'non-profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"Metaspace\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"Compressed Class Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"Par Eden Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"Par Survivor Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"CMS Old Gen\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"G1 Eden Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"G1 Survivor Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_max{pool=\"G1 Old Gen\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"CodeHeap 'non-nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"CodeHeap 'profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"CodeHeap 'non-profiled nmethods'\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"Metaspace\",}"));
         assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"Compressed Class Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"Par Eden Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"Par Survivor Space\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"CMS Old Gen\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"G1 Eden Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"G1 Survivor Space\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_memory_pool_bytes_init{pool=\"G1 Old Gen\",}"));
     }
 
     @Test
@@ -202,10 +190,8 @@ public class MetricsITest extends AbstractITest {
 
     @Test
     public void testJvmGcMetrics() {
-        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_count{gc=\"ParNew\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_sum{gc=\"ParNew\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_count{gc=\"ConcurrentMarkSweep\",}"));
-        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_sum{gc=\"ConcurrentMarkSweep\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_count{gc=\"G1 Young Generation\",}"));
+        assertThat(METRICS_RESPONSE, containsString("jvm_gc_collection_seconds_sum{gc=\"G1 Young Generation\",}"));
     }
 
     @Test

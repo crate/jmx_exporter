@@ -90,21 +90,115 @@ public class CrateCollectorTest {
         assertThat(metrics.hasMoreElements(), is(true));
 
         Collector.MetricFamilySamples samples = metrics.nextElement();
-        assertThat(samples.name, is("crate_queries"));
+        assertThat(samples.name, is("crate_query_failed_count"));
 
-        assertThat(samples.samples.size(), is(1));
-        Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
-        assertThat(sample.value, is(2.0));
+        assertThat(samples.samples.size(), is(8));
+        var sample = samples.samples.get(0);
+        assertThat(sample.value, is(1.0));
         assertThat(sample.labelNames, hasItem(is("query")));
         assertThat(sample.labelValues, hasItem(is("Select")));
+
+        // make test deterministic
+        samples.samples.sort(Comparator.comparing(c -> c.value));
+
+        sample = samples.samples.get(1);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Insert")));
+
+        sample = samples.samples.get(2);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Update")));
+
+        sample = samples.samples.get(3);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Delete")));
+
+        sample = samples.samples.get(4);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Management")));
+
+        sample = samples.samples.get(5);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("DDL")));
+
+        sample = samples.samples.get(6);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Copy")));
+
+        sample = samples.samples.get(7);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Undefined")));
 
         samples = metrics.nextElement();
-        assertThat(samples.name, is("crate_query_duration_seconds"));
-        assertThat(samples.samples.size(), is(1));
+        assertThat(samples.name, is("crate_query_total_count"));
+        assertThat(samples.samples.size(), is(8));
+
+        // make test deterministic
+        samples.samples.sort(Comparator.comparing(c -> String.join("", c.labelNames)));
+
         sample = samples.samples.get(0);
-        assertThat(sample.value, is(1.2));
+        assertThat(sample.value, is(1.0));
         assertThat(sample.labelNames, hasItem(is("query")));
         assertThat(sample.labelValues, hasItem(is("Select")));
+
+        sample = samples.samples.get(1);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Insert")));
+
+        sample = samples.samples.get(2);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Update")));
+
+        sample = samples.samples.get(3);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Delete")));
+
+        sample = samples.samples.get(4);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Management")));
+
+        sample = samples.samples.get(5);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("DDL")));
+
+        sample = samples.samples.get(7);
+        assertThat(sample.value, is(1.0));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Undefined")));
+
+        samples = metrics.nextElement();
+        // metrics crate_queries is removed from 4.3.2, it only exists for bwc reasons with older versions
+        assertThat(samples.name, is("crate_queries"));
+        assertThat(samples.samples.size(), is(1));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Undefined")));
+
+        samples = metrics.nextElement();
+        // metrics crate_query_sum_of_durations_millis is removed from 4.3.2, it only exists for bwc reasons with older versions
+        assertThat(samples.name, is("crate_query_sum_of_durations_millis"));
+        assertThat(samples.samples.size(), is(8));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Undefined")));
+
+        samples = metrics.nextElement();
+        // metrics crate_query_sum_of_durations_millis is removed from 4.3.2, it only exists for bwc reasons with older versions
+        assertThat(samples.name, is("crate_query_duration_seconds"));
+        assertThat(samples.samples.size(), is(1));
+        assertThat(sample.labelNames, hasItem(is("query")));
+        assertThat(sample.labelValues, hasItem(is("Undefined")));
+
     }
 
     @Test
@@ -266,43 +360,266 @@ public class CrateCollectorTest {
 
         Collector.MetricFamilySamples.Sample sample = samples.samples.get(0);
         assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
-        assertThat(sample.labelValues, is(Arrays.asList("parent", "limit")));
+        assertThat(sample.labelValues, is(Arrays.asList("fielddata", "limit")));
         assertThat(sample.value, is(123456d));
 
         sample = samples.samples.get(1);
         assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
-        assertThat(sample.labelValues, is(Arrays.asList("parent", "used")));
+        assertThat(sample.labelValues, is(Arrays.asList("fielddata", "used")));
         assertThat(sample.value, is(42d));
 
         sample = samples.samples.get(2);
         assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
-        assertThat(sample.labelValues, is(Arrays.asList("query", "limit")));
+        assertThat(sample.labelValues, is(Arrays.asList("flightrequests", "limit")));
         assertThat(sample.value, is(123456d));
 
         sample = samples.samples.get(3);
         assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("flightrequests", "used")));
+        assertThat(sample.value, is(42.0d));
+
+        sample = samples.samples.get(4);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("jobslog", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(5);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("jobslog", "used")));
+        assertThat(sample.value, is(42.0d));
+
+        sample = samples.samples.get(6);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("operationlog", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(7);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("operationlog", "used")));
+        assertThat(sample.value, is(42.0d));
+
+        sample = samples.samples.get(8);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("parent", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(9);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("parent", "used")));
+        assertThat(sample.value, is(42.0d));
+
+        sample = samples.samples.get(10);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("query", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(11);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
         assertThat(sample.labelValues, is(Arrays.asList("query", "used")));
         assertThat(sample.value, is(22.0d));
+
+        sample = samples.samples.get(12);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("request", "limit")));
+        assertThat(sample.value, is(123456d));
+
+        sample = samples.samples.get(13);
+        assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
+        assertThat(sample.labelValues, is(Arrays.asList("request", "used")));
+        assertThat(sample.value, is(42.0d));
     }
 
     public interface QueryStatsMBean {
 
+        // Removed from 4.3.2, only exists for bwc
         double getSelectQueryFrequency();
 
+        // Removed from 4.3.2, only exists for bwc
         double getSelectQueryAverageDuration();
+
+        long getSelectQueryTotalCount();
+
+        long getInsertQueryTotalCount();
+
+        long getUpdateQueryTotalCount();
+
+        long getDeleteQueryTotalCount();
+
+        long getManagementQueryTotalCount();
+
+        long getDDLQueryTotalCount();
+
+        long getCopyQueryTotalCount();
+
+        long getUndefinedQueryTotalCount();
+
+        long getSelectQuerySumOfDurations();
+
+        long getInsertQuerySumOfDurations();
+
+        long getUpdateQuerySumOfDurations();
+
+        long getDeleteQuerySumOfDurations();
+
+        long getManagementQuerySumOfDurations();
+
+        long getDDLQuerySumOfDurations();
+
+        long getCopyQuerySumOfDurations();
+
+        long getUndefinedQuerySumOfDurations();
+
+        long getSelectQueryFailedCount();
+
+        long getInsertQueryFailedCount();
+
+        long getUpdateQueryFailedCount();
+
+        long getDeleteQueryFailedCount();
+
+        long getManagementQueryFailedCount();
+
+        long getDDLQueryFailedCount();
+
+        long getCopyQueryFailedCount();
+
+        long getUndefinedQueryFailedCount();
     }
 
     private static class QueryStats implements QueryStatsMBean {
 
         static final String NAME = "io.crate.monitoring:type=QueryStats";
+
+        // Removed from 4.3.2, only exists for bwc
         @Override
         public double getSelectQueryFrequency() {
             return 2;
         }
 
+        // Removed from 4.3.2, only exists for bwc
         @Override
         public double getSelectQueryAverageDuration() {
             return 1.2;
+        }
+
+        @Override
+        public long getSelectQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getInsertQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getUpdateQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getDeleteQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getManagementQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getDDLQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getCopyQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getUndefinedQueryTotalCount() {
+            return 1;
+        }
+
+        @Override
+        public long getSelectQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getInsertQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getUpdateQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getDeleteQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getManagementQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getDDLQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getCopyQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getUndefinedQuerySumOfDurations() {
+            return 1;
+        }
+
+        @Override
+        public long getSelectQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getInsertQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getUpdateQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getDeleteQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getManagementQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getDDLQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getCopyQueryFailedCount() {
+            return 1;
+        }
+
+        @Override
+        public long getUndefinedQueryFailedCount() {
+            return 1;
         }
     }
 
@@ -449,7 +766,18 @@ public class CrateCollectorTest {
 
         CircuitBreakers.Stats getParent();
 
+        CircuitBreakers.Stats getFieldData();
+
+        CircuitBreakers.Stats getInFlightRequests();
+
+        CircuitBreakers.Stats getRequest();
+
         CircuitBreakers.Stats getQuery();
+
+        CircuitBreakers.Stats getJobsLog();
+
+        CircuitBreakers.Stats getOperationsLog();
+
     }
 
     private static class CircuitBreakers implements CircuitBreakersMXBean {
@@ -492,8 +820,34 @@ public class CrateCollectorTest {
         }
 
         @Override
+        public Stats getFieldData() {
+            return new Stats("fielddata", 123456, 42);
+        }
+
+        @Override
+        public Stats getInFlightRequests() {
+            return new Stats("flightrequests", 123456, 42);
+        }
+
+        @Override
+        public Stats getRequest() {
+            return new Stats("request", 123456, 42);
+        }
+
+        @Override
         public Stats getQuery() {
             return new Stats("query", 123456, 22);
+        }
+
+        @Override
+        public Stats getJobsLog() {
+            return new Stats("jobslog", 123456, 42);
+        }
+
+        @Override
+        public Stats getOperationsLog() {
+            return new Stats("operationlog", 123456, 42);
+
         }
     }
 }
