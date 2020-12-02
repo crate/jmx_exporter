@@ -45,6 +45,14 @@ public interface Recorder {
                                                 " cannot be called with CompositeData bean value");
     }
 
+    default boolean recordBean(String domain,
+                               String attrName,
+                               CompositeData[] beanValue,
+                               MetricSampleConsumer metricSampleConsumer) {
+        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
+                " cannot be called with CompositeData[] bean value");
+    }
+
     /**
      * Clears any internal structures before new collect()
      */

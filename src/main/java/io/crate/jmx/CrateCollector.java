@@ -136,7 +136,7 @@ public class CrateCollector extends Collector {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean
-                   || value instanceof CompositeDataSupport) {
+                   || value instanceof CompositeDataSupport || value instanceof CompositeData[]) {
             logScrape(domain + beanProperties + attrName, value.toString());
             recordBean(beanProperties, attrName, attrDescription, value);
         } else {
@@ -172,6 +172,8 @@ public class CrateCollector extends Collector {
                     (Boolean) beanValue ? 1 : 0);
         } else if (beanValue instanceof CompositeData) {
             recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue);
+        } else if (beanValue instanceof CompositeData[]) {
+            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData[]) beanValue);
         } else if ((beanValue instanceof String) == false) {
             // only log on non-string values, string values are ignored by intend
             LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
@@ -202,6 +204,22 @@ public class CrateCollector extends Collector {
     private void recordCompositeDataMBeanValue(String attrName,
                                                String mBeanName,
                                                CompositeData beanValue) {
+        Recorder recorder = RecorderRegistry.get(mBeanName);
+        if (recorder != null) {
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
+            if (supportedAttribute == false) {
+                LOGGER.log(Level.SEVERE,
+                        "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
+            }
+        } else {
+            LOGGER.log(Level.SEVERE,
+                    "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
+        }
+    }
+
+    private void recordCompositeDataMBeanValue(String attrName,
+                                               String mBeanName,
+                                               CompositeData[] beanValue) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);

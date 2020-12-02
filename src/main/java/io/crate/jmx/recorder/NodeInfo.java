@@ -24,11 +24,68 @@ package io.crate.jmx.recorder;
 
 import io.prometheus.client.Collector;
 
+import javax.management.openmbean.CompositeData;
+import java.util.List;
+import java.util.Set;
+import java.util.Arrays;
+import java.util.Locale;
 import java.util.Collections;
+
 
 public class NodeInfo implements Recorder {
 
     static final String MBEAN_NAME = "NodeInfo";
+
+    @Override
+    public boolean recordBean(String domain, String attrName, CompositeData beanValue, MetricSampleConsumer metricSampleConsumer) {
+        if (!"ShardStats".equals(attrName)) {
+            return false;
+        }
+        Set<String> names = beanValue.getCompositeType().keySet();
+        for (String propertyName : names) {
+            Object value = beanValue.get(propertyName);
+            if (value instanceof String) {
+                // we're not interested in non-numeric values e.g. name
+                continue;
+            }
+            metricSampleConsumer.accept(
+                    new Collector.MetricFamilySamples.Sample(
+                            domain + '_' + "node",
+                            Arrays.asList("name", "property"),
+                            Arrays.asList("shard_stats", propertyName.toLowerCase(Locale.getDefault())),
+                            ((Number) value).longValue()
+                    ),
+                    Collector.Type.GAUGE,
+                    "Statistics for Shards located on the Node."
+            );
+        }
+        return true;
+    }
+
+    @Override
+    public boolean recordBean(String domain, String attrName, CompositeData[] beanValue, MetricSampleConsumer metricSampleConsumer) {
+        if (!"ShardInfo".equals(attrName)) {
+            return false;
+        }
+        for (CompositeData compositeData : beanValue) {
+            Integer shardId = (Integer) compositeData.get("shardId");
+            String table = (String) compositeData.get("table");
+            Long size = (Long) compositeData.get("size");
+            String partitionIdent = (String) compositeData.get("partitionIdent");
+
+            metricSampleConsumer.accept(
+                    new Collector.MetricFamilySamples.Sample(
+                            domain + '_' + "node",
+                            List.of("name", "property", "id", "table", "partition_ident"),
+                            Arrays.asList("shard_info", "size", shardId.toString(), table, partitionIdent),
+                            size
+                    ),
+                    Collector.Type.GAUGE,
+                    "Information for Shards located on the Node."
+            );
+        }
+        return true;
+    }
 
     @Override
     public boolean recordBean(String domain,
