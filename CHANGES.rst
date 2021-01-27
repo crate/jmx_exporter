@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+- Made sure unsupported jmx datatypes are only logged and not cause to stop the
+  the agent.
+
 - Added new shard related metrics to ``NodeInfo`` reporting detailed information
   about the shards located on the node.
 
