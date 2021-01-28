@@ -33,24 +33,21 @@ public interface Recorder {
                                String attrName,
                                Number beanValue,
                                MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
-                                                " cannot be called with Numeric bean value");
+        return false;
     }
 
     default boolean recordBean(String domain,
                                String attrName,
                                CompositeData beanValue,
                                MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
-                                                " cannot be called with CompositeData bean value");
+        return false;
     }
 
     default boolean recordBean(String domain,
                                String attrName,
                                CompositeData[] beanValue,
                                MetricSampleConsumer metricSampleConsumer) {
-        throw new UnsupportedOperationException(this.getClass().getSimpleName() +
-                " cannot be called with CompositeData[] bean value");
+        return false;
     }
 
     /**
