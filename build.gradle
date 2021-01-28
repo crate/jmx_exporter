@@ -3,12 +3,12 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'de.thetaphi:forbiddenapis:2.6'
+        classpath 'de.thetaphi:forbiddenapis:3.0.1'
     }
 }
 
 plugins {
-    id "com.github.spotbugs" version "1.6.10"
+    id "com.github.spotbugs" version "4.6.0"
     id "com.github.johnrengelman.shadow" version "4.0.4"
 }
 
@@ -27,7 +27,6 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
-    apply plugin: 'com.github.spotbugs'
     apply plugin: 'jacoco'
     apply plugin: 'checkstyle'
     apply plugin: 'de.thetaphi.forbiddenapis'
@@ -68,10 +67,13 @@ spotbugs {
     reportLevel = "low"
 }
 
-tasks.withType(com.github.spotbugs.SpotBugsTask) {
+spotbugsMain {
     reports {
-        xml.enabled = false
-        html.enabled = true
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
     }
 }
 
@@ -162,8 +164,15 @@ forbiddenApisMain {
     ignoreFailures = false
 }
 
+forbiddenApisTest {
+    bundledSignatures = ['jdk-unsafe', 'jdk-deprecated']
+    signaturesFiles = files("$rootDir/gradle/forbidden-signatures.txt")
+    suppressAnnotations = ['**.SuppressForbidden']
+    ignoreFailures = true
+}
+
 wrapper {
-    gradleVersion = '5.2.1'
+    gradleVersion = '6.8.1'
 }
 
 shadowJar {
@@ -199,6 +208,7 @@ test.dependsOn(dependsOn: [jar])   // JAR is needed by integration tests
 task myJavadocs(type: Javadoc, dependsOn: processResources) {
     classpath = configurations.compile
     source = sourceSets.main.allJava
+    failOnError = false
 }
 
 task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
