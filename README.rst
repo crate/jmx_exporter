@@ -15,7 +15,7 @@ Example usage:
 
 ::
 
-   export CRATE_JAVA_OPTS="-javaagent:<PATH_TO>/crate-jmx-exporter-0.6.0.jar=8080"
+   export CRATE_JAVA_OPTS="-javaagent:<PATH_TO>/crate-jmx-exporter-1.0.0.jar=8080"
    ./bin/crate
 
 Afterwards the `Available HTTP endpoints`_ are accessible via HTTP at

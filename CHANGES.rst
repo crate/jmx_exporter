@@ -5,14 +5,19 @@
 Unreleased
 ==========
 
+None
+
+2021/01/28 1.0.0
+================
+
 - Made sure unsupported jmx datatypes are only logged and not cause to stop the
-  the agent.
+  agent.
 
 - Added new shard related metrics to ``NodeInfo`` reporting detailed information
   about the shards located on the node.
 
 Breaking changes
-================
+----------------
 
 - Dropped support for java <11
 
