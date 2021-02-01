@@ -22,29 +22,33 @@
 
 package io.crate.jmx.integrationtests;
 
-import com.carrotsearch.randomizedtesting.RandomizedTest;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import io.crate.testing.CrateTestCluster;
 import io.crate.testing.CrateTestServer;
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Random;
 
-public abstract class AbstractITest extends RandomizedTest {
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
-    private static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-latest.tar.gz";
-    private static String[] CRATE_VERSIONS = new String[]{"latest"};
+public abstract class AbstractITest {
+
+    protected static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-latest.tar.gz";
+
+    protected static String metricsResponse;
 
     private static final int JMX_HTTP_PORT = 17071;
 
@@ -53,38 +57,38 @@ public abstract class AbstractITest extends RandomizedTest {
 
     private static CrateTestCluster testCluster;
 
-    private static String getRandomServerVersion() {
-        String version = System.getenv().get("CRATE_VERSION");
-        if (version != null) {
-            return version;
-        }
-        Random random = getRandom();
-        return CRATE_VERSIONS[random.nextInt(CRATE_VERSIONS.length)];
+    String getCrateDistributionURL() {
+        return LATEST_URL;
     }
 
-    @BeforeClass
-    public static void setUpClusterAndAgent() throws Throwable {
-        String version = getRandomServerVersion();
-        CrateTestCluster.Builder builder;
-
-        if (version.equals("latest") && System.getenv().get("CRATE_VERSION") == null) {
-            builder = CrateTestCluster.fromURL(LATEST_URL);
-        } else {
-            builder = CrateTestCluster.fromVersion(getRandomServerVersion());
+    @Before
+    public void setup() throws Throwable {
+        if (testCluster == null) {
+            setUpClusterAndAgent(getCrateDistributionURL());
+            metricsResponse = parseMartricsResponse();
         }
-        testCluster = builder
-                .keepWorkingDir(false)
-                .build();
+    }
 
+
+    protected static void setUpClusterAndAgent(String url) throws Throwable {
+        CrateTestCluster.Builder builder;
+        builder = CrateTestCluster.fromURL(url);
+        testCluster = builder.keepWorkingDir(false).build();
         testCluster.before();
-
         String pid = getCratePID();
         attachAgent(pid);
+    }
+
+    protected static String parseMartricsResponse() throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) randomJmxUrlFromServers("/metrics").openConnection();
+        assertThat(connection.getResponseCode(), is(200));
+        return parseResponse(connection.getInputStream());
     }
 
     @AfterClass
     public static void tearDown() {
         testCluster.after();
+        testCluster = null;
     }
 
     private static String getCratePID() {
@@ -138,5 +142,17 @@ public abstract class AbstractITest extends RandomizedTest {
 
         br.close();
         return res.toString();
+    }
+
+    void assertMetricValue(String metricString) {
+        int startIdx = metricsResponse.indexOf(metricString);
+        assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));
+        int endIdx = metricsResponse.indexOf("\n", startIdx);
+        String metricValueStr = metricsResponse.substring(startIdx + metricString.length(), endIdx);
+        assertThat(
+                String.format("Metric '%s' value '%s' must be in the format ^-\\d+.\\d+(E\\d+)?", metricString, metricValueStr),
+                metricValueStr.matches("^-?\\d+.\\d+(E\\d+)?"),
+                is(true)
+        );
     }
 }

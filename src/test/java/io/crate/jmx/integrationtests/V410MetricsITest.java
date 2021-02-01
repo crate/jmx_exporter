@@ -22,19 +22,12 @@
 
 package io.crate.jmx.integrationtests;
 
-import org.junit.Test;
+public class V410MetricsITest extends MetricsITest {
 
-import java.net.HttpURLConnection;
+    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-4.1.0.tar.gz";
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-public class ReadyITest extends AbstractITest {
-
-    @Test
-    public void testReadyEndpoint() throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) randomJmxUrlFromServers("/ready").openConnection();
-        assertThat(connection.getResponseCode(), is(200));
-        assertThat(parseResponse(connection.getInputStream()), is(""));
+    @Override
+    String getCrateDistributionURL() {
+        return URL;
     }
 }
