@@ -5,7 +5,8 @@
 Unreleased
 ==========
 
-None
+- Migrated from Bintray to Maven Central. All new releases go to Maven Central
+  from now on.
 
 2021/01/28 1.0.0
 ================
