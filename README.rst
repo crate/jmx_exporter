@@ -76,7 +76,7 @@ Looking for more help?
 .. _Crate.io: http://crate.io/
 .. _CrateDB: https://github.com/crate/crate
 .. _developer docs: DEVELOP.rst
-.. _Download the jar: https://dl.bintray.com/crate/crate/io/crate/crate-jmx-exporter/0.6.0/crate-jmx-exporter-0.6.0.jar
+.. _Download the jar: https://bintray.com/crate/crate/crate-jmx-exporter
 .. _Enterprise Feature: https://crate.io/docs/crate/reference/en/latest/enterprise/index.html
 .. _JMX Monitoring: https://crate.io/docs/crate/reference/en/latest/admin/monitoring.html
 .. _Prometheus: https://prometheus.io/docs/instrumenting/writing_exporters/
