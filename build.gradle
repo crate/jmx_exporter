@@ -4,6 +4,7 @@ buildscript {
     }
     dependencies {
         classpath 'de.thetaphi:forbiddenapis:3.0.1'
+        classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0'
     }
 }
 
@@ -16,9 +17,13 @@ Properties props = new Properties()
 props.load(new FileInputStream(file("gradle/version.properties")));
 ext.set("versions", props)
 
+import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
+
 // Please reflect the version change in ``README.rst`` to point to what will be
 // the newly released version.
 project.version = "1.0.0"
+
+apply plugin: 'io.codearte.nexus-staging'
 
 allprojects {
     group = 'io.crate'
@@ -176,6 +181,7 @@ wrapper {
 }
 
 shadowJar {
+    baseName = 'crate-jmx-exporter'
     classifier ''
     duplicatesStrategy 'fail'
     configurations = [project.configurations.compile]
@@ -212,6 +218,7 @@ task myJavadocs(type: Javadoc, dependsOn: processResources) {
 }
 
 task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
+    baseName = 'crate-jmx-exporter'
     classifier = 'javadoc'
     from myJavadocs.destinationDir
     manifest {
@@ -220,6 +227,7 @@ task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
 }
 
 task sourceJar (type : Jar) {
+    baseName = 'crate-jmx-exporter'
     classifier = 'sources'
     from sourceSets.main.allSource
     manifest {
@@ -238,8 +246,8 @@ task signJars (type : Sign, dependsOn: [jar, javadocJar, sourceJar]) {
 }
 
 
-project.ext.bintrayUsername = project.hasProperty('bintrayUsername') ? bintrayUsername : ""
-project.ext.bintrayPassword = project.hasProperty('bintrayPassword') ? bintrayPassword : ""
+project.ext.sonatypeUsername = project.hasProperty('sonatypeUsername') ? sonatypeUsername : ""
+project.ext.sonatypePassword = project.hasProperty('sonatypePassword') ? sonatypePassword : ""
 project.ext.url = 'https://crate.io'
 project.ext.scm = {
     url 'https://github.com/crate/jmx_exporter'
@@ -267,12 +275,28 @@ uploadArchives {
         mavenDeployer {
             beforeDeployment {
                 MavenDeployment deployment -> signing.signPom(deployment)
-                    if (project.ext.bintrayUsername.length() == 0 || project.ext.bintrayPassword.length() == 0) {
-                        throw new StopExecutionException("uploadArchives cannot be called without bintray username and password")
+                if (project.ext.sonatypeUsername.length() == 0 || project.ext.sonatypePassword.length() == 0) {
+                    throw new StopExecutionException("uploadArchives cannot be called without bintray username and password")
+                }
+
+                // This is a (very) un-pretty way of attaching the asc files as artifacts to the deployment.
+                // The mavenDeployer is pretty old, not documented very well - and does not pick up .asc files.
+                // Here we're slightly abusing the system and creating "fake" .asc artifacts for each .jar file,
+                // because we know for certain that if we got there, the asc files must exist.
+                // If we don't do this, Sonatype will not allow promotion to maven central.
+                artifacts.each { ca ->
+                    if (ca.file.path.endsWith('jar')) {
+                        def ascfile = file(ca.file.path + '.asc')
+                        deployment.addArtifact(new DefaultPublishArtifact(ca.name, "jar.asc", "jar.asc", ca.classifier, null, ascfile))
                     }
+                }
             }
 
-            pom.project {
+            MavenPom pomJmx = addFilter('crate-jmx-exporter') {artifact, file ->
+                artifact.name == 'crate-jmx-exporter'
+            }
+
+            pomJmx.project {
                 artifactId 'crate-jmx-exporter'
                 name 'crate-jmx-exporter'
                 description 'Crate.IO Java Agent to expose JMX metrics via HTTP'
@@ -282,12 +306,8 @@ uploadArchives {
                 developers project.ext.developers
             }
 
-            pom = addFilter('crate-jmx-exporter') {artifact, file ->
-                artifact.name == 'crate-jmx-exporter'
-            }
-
-            repository(id: 'crate-jmx-exporter', url: 'https://api.bintray.com/maven/crate/crate/crate-jmx-exporter') {
-                authentication(userName: project.ext.bintrayUsername, password: project.ext.bintrayPassword)
+            repository(id: 'crate-jmx-exporter', url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                authentication(userName: project.ext.sonatypeUsername, password: project.ext.sonatypePassword)
             }
         }
     }
