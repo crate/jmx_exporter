@@ -48,7 +48,7 @@ To create a new release, you must:
 
 - Push tag to origin by running ``git push --tags``
 
-- Deploy to bintray (see section below)
+- Deploy to maven central (see section below)
 
 - Update ``README.rst`` to point to the newly uploaded jar
 
@@ -57,8 +57,8 @@ To create a new release, you must:
 - Push changes to origin
 
 
-Bintray Deployment
-==================
+Maven Central Deployment
+========================
 
-The artifacts can be uploaded to bintray using ``./gradlew uploadArchives``.
-This gradle task requires signing and bintray credentials.
+The artifacts can be uploaded to maven central using ``./gradlew uploadArchives closeAndReleaseRepository``.
+This gradle task requires signing and sonatype credentials.

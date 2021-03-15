@@ -276,7 +276,7 @@ uploadArchives {
             beforeDeployment {
                 MavenDeployment deployment -> signing.signPom(deployment)
                 if (project.ext.sonatypeUsername.length() == 0 || project.ext.sonatypePassword.length() == 0) {
-                    throw new StopExecutionException("uploadArchives cannot be called without bintray username and password")
+                    throw new StopExecutionException("uploadArchives cannot be called without sonatype username and password")
                 }
 
                 // This is a (very) un-pretty way of attaching the asc files as artifacts to the deployment.
