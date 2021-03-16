@@ -31,11 +31,12 @@ Available HTTP endpoints
 
 This endpoint will return general JVM and CrateDB specific JMX MBean metrics as
 plain text. The text format is following the exporter format used by `Prometheus`_.
+See documentation about `JMX Monitoring`_ for details.
 
 .. note::
 
-   CrateDB JMX MBeans are only available as an `Enterprise Feature`_.
-   See documentation about `JMX Monitoring`_ for details.
+   Monitoring CrateDB JMX MBeans prior CrateDB 4.5 requires an `Enterprise License`_.
+
 
 /ready
 ~~~~~~
@@ -77,7 +78,7 @@ Looking for more help?
 .. _CrateDB: https://github.com/crate/crate
 .. _developer docs: DEVELOP.rst
 .. _Download the jar: https://repo1.maven.org/maven2/io/crate/crate-jmx-exporter/
-.. _Enterprise Feature: https://crate.io/docs/crate/reference/en/latest/enterprise/index.html
+.. _Enterprise License: https://crate.io/docs/crate/reference/en/4.4/editions.html#enterprise-features
 .. _JMX Monitoring: https://crate.io/docs/crate/reference/en/latest/admin/monitoring.html
 .. _Prometheus: https://prometheus.io/docs/instrumenting/writing_exporters/
 .. _support channels: https://crate.io/support/
