@@ -58,8 +58,6 @@ dependencies {
     testCompile ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
         exclude group: 'junit', module: 'junit'
     }
-    // gradle does not include tools.jar by default
-    testCompile files("${System.getProperty('java.home')}/../lib/tools.jar")
 }
 
 jacoco {
