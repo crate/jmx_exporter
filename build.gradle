@@ -1,41 +1,25 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0'
-    }
-}
-
 plugins {
     id 'checkstyle'
     id 'de.thetaphi.forbiddenapis' version '3.1'
     id 'java'
+    id 'maven-publish'
+    id 'signing'
+    id 'idea'
+    id 'jacoco'
 }
 
 Properties props = new Properties()
 props.load(new FileInputStream(file("gradle/version.properties")));
 ext.set("versions", props)
 
-import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
-
 // Please reflect the version change in ``README.rst`` to point to what will be
 // the newly released version.
 project.version = "1.0.0"
 
-apply plugin: 'io.codearte.nexus-staging'
-
 allprojects {
     group = 'io.crate'
-
-    apply plugin: 'idea'
-    apply plugin: 'maven'
-    apply plugin: 'signing'
-    apply plugin: 'jacoco'
-
     repositories {
         mavenCentral()
-        jcenter()
     }
 
     sourceCompatibility = "11"
@@ -61,34 +45,10 @@ jacoco {
 }
 
 
-
 tasks.withType(Javadoc) {
     failOnError = false
 }
 
-
-compileJava {
-    options.warnings = true
-    options.deprecation = true
-
-    finalizedBy checkstyleMain, forbiddenApisMain
-}
-
-
-sourceSets {
-    main {
-        java {
-            srcDir 'src/main/java'
-        }
-    }
-    test {
-        java {
-            srcDir 'src/test/java'
-        }
-    }
-}
-
-def jvmTestFlags = ['-ea']
 
 test {
     testLogging {
@@ -104,7 +64,7 @@ idea {
             // enable assertions for junit tests
             def junitDefaults = runManager.configuration.find { it.@default == 'true' && it.@type == 'JUnit' }
             junitDefaults.option.find { it.@name == 'VM_PARAMETERS' }.replaceNode {
-                option(name: 'VM_PARAMETERS', value: jvmTestFlags.join(' '))
+                option(name: 'VM_PARAMETERS', value: '-ea')
             }
         }
     }
@@ -163,7 +123,7 @@ wrapper {
 jar {
     classifier ''
     duplicatesStrategy 'fail'
-    baseName = 'crate-jmx-exporter'
+    archiveBaseName = 'crate-jmx-exporter'
     manifest {
         attributes(
             "Implementation-Title": "Crate.IO JMX HTTP Exporter Agent",
@@ -179,105 +139,54 @@ jar {
 
 test.dependsOn(dependsOn: [jar])   // JAR is needed by integration tests
 
-
-task myJavadocs(type: Javadoc, dependsOn: processResources) {
-    classpath = configurations.compile
-    source = sourceSets.main.allJava
-    failOnError = false
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
-task javadocJar (type: Jar, dependsOn: [myJavadocs]) {
-    baseName = 'crate-jmx-exporter'
-    classifier = 'javadoc'
-    from myJavadocs.destinationDir
-    manifest {
-        attributes("Implementation-Title": "Crate.IO JMX HTTP Exporter Agent")
-    }
-}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'io.crate'
+            artifactId = 'crate-jmx-exporter'
+            from components.java
 
-task sourceJar (type : Jar) {
-    baseName = 'crate-jmx-exporter'
-    classifier = 'sources'
-    from sourceSets.main.allSource
-    manifest {
-        attributes("Implementation-Title": "Crate.IO JMX HTTP Exporter Agent")
-    }
-}
-
-artifacts {
-    archives jar
-    archives javadocJar
-    archives sourceJar
-}
-
-task signJars (type : Sign, dependsOn: [jar, javadocJar, sourceJar]) {
-    sign configurations.archives
-}
-
-
-project.ext.sonatypeUsername = project.hasProperty('sonatypeUsername') ? sonatypeUsername : ""
-project.ext.sonatypePassword = project.hasProperty('sonatypePassword') ? sonatypePassword : ""
-project.ext.url = 'https://crate.io'
-project.ext.scm = {
-    url 'https://github.com/crate/jmx_exporter'
-    connection 'scm:git:git://github.com/crate/jmx_exporter.git'
-    developerConnection 'scm:git:ssh:git@github.com:crate/jmx_exporter.git'
-}
-project.ext.licenses = {
-    license {
-        name 'The Apache Software License, Version 2.0'
-        url 'http://www.apache.org/license/LICENSE-2.0.txt'
-        distribution 'repo'
-    }
-}
-project.ext.developers = {
-    developer {
-        id 'crate'
-        name 'Crate Developers'
-        email 'office@crate.io'
-    }
-}
-
-uploadArchives.dependsOn([signJars])
-uploadArchives {
-    repositories{
-        mavenDeployer {
-            beforeDeployment {
-                MavenDeployment deployment -> signing.signPom(deployment)
-                if (project.ext.sonatypeUsername.length() == 0 || project.ext.sonatypePassword.length() == 0) {
-                    throw new StopExecutionException("uploadArchives cannot be called without sonatype username and password")
-                }
-
-                // This is a (very) un-pretty way of attaching the asc files as artifacts to the deployment.
-                // The mavenDeployer is pretty old, not documented very well - and does not pick up .asc files.
-                // Here we're slightly abusing the system and creating "fake" .asc artifacts for each .jar file,
-                // because we know for certain that if we got there, the asc files must exist.
-                // If we don't do this, Sonatype will not allow promotion to maven central.
-                artifacts.each { ca ->
-                    if (ca.file.path.endsWith('jar')) {
-                        def ascfile = file(ca.file.path + '.asc')
-                        deployment.addArtifact(new DefaultPublishArtifact(ca.name, "jar.asc", "jar.asc", ca.classifier, null, ascfile))
+            pom {
+                name = 'crate-jmx-exporter'
+                description = 'Crate.IO Java Agent to expose JMX metrics via HTTP'
+                url = 'https://github.com/crate/jmx_exporter'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
-            }
-
-            MavenPom pomJmx = addFilter('crate-jmx-exporter') {artifact, file ->
-                artifact.name == 'crate-jmx-exporter'
-            }
-
-            pomJmx.project {
-                artifactId 'crate-jmx-exporter'
-                name 'crate-jmx-exporter'
-                description 'Crate.IO Java Agent to expose JMX metrics via HTTP'
-                url project.ext.url
-                scm project.ext.scm
-                licenses project.ext.licenses
-                developers project.ext.developers
-            }
-
-            repository(id: 'crate-jmx-exporter', url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
-                authentication(userName: project.ext.sonatypeUsername, password: project.ext.sonatypePassword)
+                developers {
+                    developer {
+                        id = 'crate'
+                        name = 'Crate Developers'
+                        email = 'office@crate.io'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/crate/jmx_exporter.git'
+                    developerConnection = 'scm:git:ssh:git@github.com:crate/jmx_exporter.git'
+                    url = 'http://example.com/my-library/'
+                }
             }
         }
     }
+    repositories {
+        maven {
+            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username = project.hasProperty('sonatypeUsername') ? sonatypeUsername : ""
+                password = project.hasProperty('sonatypePassword') ? sonatypePassword : ""
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }
