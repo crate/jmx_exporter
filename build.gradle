@@ -10,6 +10,7 @@ buildscript {
 
 plugins {
     id "com.github.johnrengelman.shadow" version "4.0.4"
+    id 'checkstyle'
 }
 
 Properties props = new Properties()
@@ -32,7 +33,6 @@ allprojects {
     apply plugin: 'maven'
     apply plugin: 'signing'
     apply plugin: 'jacoco'
-    apply plugin: 'checkstyle'
     apply plugin: 'de.thetaphi.forbiddenapis'
     apply plugin: 'com.github.johnrengelman.shadow'
 
@@ -134,7 +134,7 @@ idea {
 }
 
 checkstyle {
-    toolVersion = "8.1"
+    toolVersion = "8.43"
     def checkstyle_dir = new String("$rootDir/gradle/checkstyle/")
     configProperties = [
             'checkstyleDir' : checkstyle_dir,

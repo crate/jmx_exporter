@@ -9,7 +9,7 @@ pipeline {
       steps {
         step([$class: 'WsCleanup'])
         checkout scm
-        sh './gradlew --no-daemon --parallel clean test'
+        sh './gradlew --no-daemon --parallel clean checkstyleMain test'
       }
     }
   }
