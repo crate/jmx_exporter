@@ -9,7 +9,6 @@ buildscript {
 }
 
 plugins {
-    id "com.github.spotbugs" version "4.6.0"
     id "com.github.johnrengelman.shadow" version "4.0.4"
 }
 
@@ -64,21 +63,7 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
-spotbugs {
-    ignoreFailures = true
-    effort = "max"
-    reportLevel = "low"
-}
 
-spotbugsMain {
-    reports {
-        html {
-            enabled = true
-            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
-            stylesheet = 'fancy-hist.xsl'
-        }
-    }
-}
 
 tasks.withType(Javadoc) {
     failOnError = false
@@ -89,7 +74,7 @@ compileJava {
     options.warnings = true
     options.deprecation = true
 
-    finalizedBy checkstyleMain, forbiddenApisMain, spotbugsMain
+    finalizedBy checkstyleMain, forbiddenApisMain
 }
 
 
