@@ -17,3 +17,6 @@ reports/
 *.iws
 out/
 
+# eclipse files
+bin/
+.metadata/
