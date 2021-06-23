@@ -8,7 +8,6 @@ buildscript {
 }
 
 plugins {
-    id "com.github.johnrengelman.shadow" version "4.0.4"
     id 'checkstyle'
     id 'de.thetaphi.forbiddenapis' version '3.1'
 }
@@ -33,7 +32,6 @@ allprojects {
     apply plugin: 'maven'
     apply plugin: 'signing'
     apply plugin: 'jacoco'
-    apply plugin: 'com.github.johnrengelman.shadow'
 
     repositories {
         mavenCentral()
@@ -162,32 +160,21 @@ wrapper {
     gradleVersion = '6.8.1'
 }
 
-shadowJar {
-    baseName = 'crate-jmx-exporter'
+jar {
     classifier ''
     duplicatesStrategy 'fail'
-    configurations = [project.configurations.compile]
-
-    dependencies {
-        exclude(dependency {
-            it.moduleGroup == 'org.apache'
-        })
-    }
+    baseName = 'crate-jmx-exporter'
     manifest {
         attributes(
             "Implementation-Title": "Crate.IO JMX HTTP Exporter Agent",
             "Implementation-Version": project.version,
             "Premain-Class": 'io.crate.jmx.Agent',
             "Agent-Class": 'io.crate.jmx.Agent'
-            )
+        )
     }
-
-    relocate 'io.prometheus', 'io.crate.jmx.shade.io.prometheus'
-}
-
-jar.dependsOn(dependsOn: [shadowJar])
-jar {
-    actions = [] // Do nothing, build shadedJar instead
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 test.dependsOn(dependsOn: [jar])   // JAR is needed by integration tests
