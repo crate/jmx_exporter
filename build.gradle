@@ -3,7 +3,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'de.thetaphi:forbiddenapis:3.0.1'
         classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.30.0'
     }
 }
@@ -11,6 +10,7 @@ buildscript {
 plugins {
     id "com.github.johnrengelman.shadow" version "4.0.4"
     id 'checkstyle'
+    id 'de.thetaphi.forbiddenapis' version '3.1'
 }
 
 Properties props = new Properties()
@@ -33,7 +33,6 @@ allprojects {
     apply plugin: 'maven'
     apply plugin: 'signing'
     apply plugin: 'jacoco'
-    apply plugin: 'de.thetaphi.forbiddenapis'
     apply plugin: 'com.github.johnrengelman.shadow'
 
     repositories {
