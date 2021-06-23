@@ -10,6 +10,7 @@ buildscript {
 plugins {
     id 'checkstyle'
     id 'de.thetaphi.forbiddenapis' version '3.1'
+    id 'java'
 }
 
 Properties props = new Properties()
@@ -28,7 +29,6 @@ allprojects {
     group = 'io.crate'
 
     apply plugin: 'idea'
-    apply plugin: 'java'
     apply plugin: 'maven'
     apply plugin: 'signing'
     apply plugin: 'jacoco'
@@ -44,14 +44,14 @@ allprojects {
 
 dependencies {
     // Needed to output all metrics using the prometheus text format
-    compile "io.prometheus:simpleclient_common:${versions.prometheus_lib}"
+    implementation "io.prometheus:simpleclient_common:${versions.prometheus_lib}"
     // Let's use default JMX metric exporter from prometheus lib
-    compile "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
+    implementation "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
 
-    testCompile "io.crate:crate-testing:${versions.crate_testing}"
-    testCompile "junit:junit:${versions.junit}"
-    testCompile "org.hamcrest:hamcrest-all:${versions.hamcrest}"
-    testCompile ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
+    testImplementation "io.crate:crate-testing:${versions.crate_testing}"
+    testImplementation "junit:junit:${versions.junit}"
+    testImplementation "org.hamcrest:hamcrest-all:${versions.hamcrest}"
+    testImplementation ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
         exclude group: 'junit', module: 'junit'
     }
 }
