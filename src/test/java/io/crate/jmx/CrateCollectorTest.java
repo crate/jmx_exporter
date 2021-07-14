@@ -23,7 +23,10 @@
 package io.crate.jmx;
 
 import io.prometheus.client.Collector;
+import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.CollectorRegistry;
+
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,10 +38,13 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.beans.ConstructorProperties;
 import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
@@ -88,117 +94,88 @@ public class CrateCollectorTest {
         CollectorRegistry registry = CollectorRegistry.defaultRegistry;
         // metrics are collected while iterating on registered ones
         Enumeration<Collector.MetricFamilySamples> metrics = registry.metricFamilySamples();
-        assertThat(metrics.hasMoreElements(), is(true));
 
-        Collector.MetricFamilySamples samples = metrics.nextElement();
-        assertThat(samples.name, is("crate_query_failed_count"));
+        List<Collector.MetricFamilySamples> allSamples = new ArrayList<>();
+        while (metrics.hasMoreElements()) {
+            allSamples.add(metrics.nextElement());
+        }
+        allSamples.sort(Comparator.comparing(x -> x.name));
+        assertThat(
+            allSamples.stream().map(x -> x.name) .collect(Collectors.toList()),
+            Matchers.contains(
+                "crate_queries",
+                "crate_query_duration_seconds",
+                "crate_query_failed_count",
+                "crate_query_sum_of_durations_millis",
+                "crate_query_total_count"
+            )
+        );
 
-        assertThat(samples.samples.size(), is(8));
-        var sample = samples.samples.get(0);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Select")));
 
-        // make test deterministic
-        samples.samples.sort(Comparator.comparing(c -> c.value));
+        Collector.MetricFamilySamples queryFailedCount = allSamples.get(2);
+        assertThat(queryFailedCount.name, is("crate_query_failed_count"));
+        assertThat(queryFailedCount.samples.size(), is(8));
+        for (var sample : queryFailedCount.samples) {
+            assertThat(sample.value, is(1.0));
+            assertThat(sample.labelNames, hasItem(is("query")));
+        }
+        assertThat(
+            queryFailedCount.samples.stream()
+                .map(x -> String.join(", ", x.labelValues))
+                .sorted()
+                .collect(Collectors.toList()),
+            Matchers.contains(
+                "Copy",
+                "DDL",
+                "Delete",
+                "Insert",
+                "Management",
+                "Select",
+                "Undefined",
+                "Update"
+            )
+        );
 
-        sample = samples.samples.get(1);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Insert")));
+        var queryTotalCount = allSamples.get(4);;
+        assertThat(queryTotalCount.name, is("crate_query_total_count"));
+        assertThat(queryTotalCount.samples.size(), is(8));
 
-        sample = samples.samples.get(2);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Update")));
+        for (var sample : queryTotalCount.samples) {
+            assertThat(sample.value, is(1.0));
+            assertThat(sample.labelNames, hasItem(is("query")));
+        }
 
-        sample = samples.samples.get(3);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Delete")));
+        assertThat(
+            queryTotalCount.samples.stream()
+                .map(x -> String.join(", ", x.labelValues))
+                .sorted()
+                .collect(Collectors.toList()),
+            Matchers.contains(
+                "Copy",
+                "DDL",
+                "Delete",
+                "Insert",
+                "Management",
+                "Select",
+                "Undefined",
+                "Update"
+            )
+        );
 
-        sample = samples.samples.get(4);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Management")));
-
-        sample = samples.samples.get(5);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("DDL")));
-
-        sample = samples.samples.get(6);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Copy")));
-
-        sample = samples.samples.get(7);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Undefined")));
-
-        samples = metrics.nextElement();
-        assertThat(samples.name, is("crate_query_total_count"));
-        assertThat(samples.samples.size(), is(8));
-
-        // make test deterministic
-        samples.samples.sort(Comparator.comparing(c -> String.join("", c.labelNames)));
-
-        sample = samples.samples.get(0);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Select")));
-
-        sample = samples.samples.get(1);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Insert")));
-
-        sample = samples.samples.get(2);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Update")));
-
-        sample = samples.samples.get(3);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Delete")));
-
-        sample = samples.samples.get(4);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Management")));
-
-        sample = samples.samples.get(5);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("DDL")));
-
-        sample = samples.samples.get(7);
-        assertThat(sample.value, is(1.0));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Undefined")));
-
-        samples = metrics.nextElement();
+        var crateQueries = allSamples.get(0);
         // metrics crate_queries is removed from 4.3.2, it only exists for bwc reasons with older versions
-        assertThat(samples.name, is("crate_queries"));
-        assertThat(samples.samples.size(), is(1));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Undefined")));
+        assertThat(crateQueries.name, is("crate_queries"));
+        assertThat(crateQueries.samples.size(), is(1));
 
-        samples = metrics.nextElement();
+        var querySumOfDurationMillis = allSamples.get(3);
         // metrics crate_query_sum_of_durations_millis is removed from 4.3.2, it only exists for bwc reasons with older versions
-        assertThat(samples.name, is("crate_query_sum_of_durations_millis"));
-        assertThat(samples.samples.size(), is(8));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Undefined")));
+        assertThat(querySumOfDurationMillis.name, is("crate_query_sum_of_durations_millis"));
+        assertThat(querySumOfDurationMillis.samples.size(), is(8));
 
-        samples = metrics.nextElement();
+        var queryDurationSeconds = allSamples.get(1);
         // metrics crate_query_sum_of_durations_millis is removed from 4.3.2, it only exists for bwc reasons with older versions
-        assertThat(samples.name, is("crate_query_duration_seconds"));
-        assertThat(samples.samples.size(), is(1));
-        assertThat(sample.labelNames, hasItem(is("query")));
-        assertThat(sample.labelValues, hasItem(is("Undefined")));
+        assertThat(queryDurationSeconds.name, is("crate_query_duration_seconds"));
+        assertThat(queryDurationSeconds.samples.size(), is(1));
 
     }
 
