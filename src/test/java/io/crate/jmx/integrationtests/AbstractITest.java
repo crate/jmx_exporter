@@ -39,6 +39,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -75,7 +76,7 @@ public abstract class AbstractITest {
         builder = CrateTestCluster.fromURL(url);
         testCluster = builder.keepWorkingDir(false).build();
         testCluster.before();
-        String pid = getCratePID();
+        long pid = testCluster.randomServer().pid().toCompletableFuture().get(5, TimeUnit.SECONDS);
         attachAgent(pid);
     }
 
@@ -91,19 +92,10 @@ public abstract class AbstractITest {
         testCluster = null;
     }
 
-    private static String getCratePID() {
-        for (VirtualMachineDescriptor desc : VirtualMachine.list()) {
-            if (desc.displayName().contains("CrateDB")) {
-                return desc.id();
-            }
-        }
-        throw new RuntimeException("Cannot find the CrateDB PID");
-    }
-
-    private static void attachAgent(String pid) throws Exception {
+    private static void attachAgent(long pid) throws Exception {
         File agentJar = findAgentJar();
         String options = String.format("%d", JMX_HTTP_PORT);
-        VirtualMachine vm = VirtualMachine.attach(pid);
+        VirtualMachine vm = VirtualMachine.attach(Long.toString(pid));
         vm.loadAgent(agentJar.getAbsolutePath(), options);
     }
 
