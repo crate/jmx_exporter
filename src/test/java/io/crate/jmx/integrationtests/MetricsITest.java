@@ -29,6 +29,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MetricsITest extends AbstractITest {
@@ -106,7 +107,7 @@ public class MetricsITest extends AbstractITest {
 
     @Test
     public void testJvmVersionMetrics() {
-        assertThat(metricsResponse, containsString("jvm_info{version="));
+        assertThat(metricsResponse, stringContainsInOrder("jvm_info{runtime=", ",vendor=", ",version=", "}"));
     }
 
     @Test
