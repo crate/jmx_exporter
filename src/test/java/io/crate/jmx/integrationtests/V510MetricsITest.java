@@ -22,9 +22,9 @@
 
 package io.crate.jmx.integrationtests;
 
-public class V410MetricsITest extends MetricsITest {
+public class V510MetricsITest extends MetricsITest {
 
-    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-4.1.0.tar.gz";
+    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-5.1.0.tar.gz";
 
     @Override
     String getCrateDistributionURL() {
