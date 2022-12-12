@@ -1,6 +1,6 @@
 plugins {
     id 'checkstyle'
-    id 'de.thetaphi.forbiddenapis' version '3.1'
+    id 'de.thetaphi.forbiddenapis' version '3.4'
     id 'java'
     id 'maven-publish'
     id 'signing'
@@ -34,14 +34,14 @@ dependencies {
 
     testImplementation "io.crate:crate-testing:${versions.crate_testing}"
     testImplementation "junit:junit:${versions.junit}"
-    testImplementation "org.hamcrest:hamcrest-all:${versions.hamcrest}"
+    testImplementation "org.hamcrest:hamcrest:${versions.hamcrest}"
     testImplementation ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {
         exclude group: 'junit', module: 'junit'
     }
 }
 
 jacoco {
-    toolVersion = "0.8.7"
+    toolVersion = "0.8.8"
 }
 
 
@@ -91,7 +91,7 @@ idea {
 }
 
 checkstyle {
-    toolVersion = "8.43"
+    toolVersion = "10.5.0"
     def checkstyle_dir = new String("$rootDir/gradle/checkstyle/")
     configProperties = [
             'checkstyleDir' : checkstyle_dir,
@@ -117,7 +117,7 @@ forbiddenApisTest {
 }
 
 wrapper {
-    gradleVersion = '7.1'
+    gradleVersion = '7.6'
 }
 
 jar {

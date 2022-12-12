@@ -197,7 +197,7 @@ public class CrateCollector extends Collector {
             String beanName = CRATE_DOMAIN_REPLACEMENT + angleBrackets(beanProperties.toString());
             // attrDescription tends not to be useful, so give the fully qualified name too.
             String help = attrDescription + " (" + beanName + attrName + ")";
-            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNTYPED);
+            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNKNOWN);
         }
     }
 
