@@ -22,12 +22,24 @@
 
 package io.crate.jmx.integrationtests;
 
-public class V420MetricsITest extends MetricsITest {
+import org.junit.Test;
 
-    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-4.2.0.tar.gz";
+public class V570MetricsITest extends MetricsITest {
+
+    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-5.7.0.tar.gz";
 
     @Override
     String getCrateDistributionURL() {
         return URL;
+    }
+
+    @Override
+    @Test
+    public void testConnectionsMetrics() {
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
     }
 }

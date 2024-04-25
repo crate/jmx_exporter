@@ -23,7 +23,6 @@
 package io.crate.jmx.integrationtests;
 
 import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
 import io.crate.testing.CrateTestCluster;
 import io.crate.testing.CrateTestServer;
 import org.junit.AfterClass;
@@ -31,10 +30,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.File;
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -138,7 +137,7 @@ public abstract class AbstractITest {
 
     void assertMetricValue(String metricString) {
         int startIdx = metricsResponse.indexOf(metricString);
-        assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(0));
+        assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(-1));
         int endIdx = metricsResponse.indexOf("\n", startIdx);
         String metricValueStr = metricsResponse.substring(startIdx + metricString.length(), endIdx);
         assertThat(

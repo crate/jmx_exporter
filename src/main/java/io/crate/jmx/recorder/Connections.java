@@ -34,7 +34,8 @@ public final class Connections implements Recorder {
     public static final String MBEAN_NAME = "Connections";
 
     private static final Pattern CONNECTIONS_PATTERN = Pattern.compile(
-            "(?<protocol>(Psql|Http|Transport))(?<property>(Open|Total))");
+            "(?<protocol>(Psql|Http|Transport))" +
+            "(?<property>(Open|Total|MessagesReceived|BytesReceived|MessagesSent|BytesSent))");
 
 
     @Override
