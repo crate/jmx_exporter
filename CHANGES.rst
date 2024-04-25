@@ -5,6 +5,21 @@
 Unreleased
 ==========
 
+- Added support for more detailed connection metrics:
+    * ``HttpMessagesReceived``
+    * ``HttpBytesReceived``
+    * ``HttpMessagesSent``
+    * ``HttpBytesSent``
+    * ``PsqlMessagesReceived``
+    * ``PsqlBytesReceived``
+    * ``PsqlMessagesSent``
+    * ``PsqlBytesSent``
+    * ``TransportTotal``
+    * ``TransportMessagesReceived``
+    * ``TransportBytesReceived``
+    * ``TransportMessagesSent``
+    * ``TransportBytesSent``
+
 - Migrated from Bintray to Maven Central. All new releases go to Maven Central
   from now on.
 

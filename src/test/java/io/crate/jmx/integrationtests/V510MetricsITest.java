@@ -22,6 +22,8 @@
 
 package io.crate.jmx.integrationtests;
 
+import org.junit.Test;
+
 public class V510MetricsITest extends MetricsITest {
 
     private static final String URL = "https://cdn.crate.io/downloads/releases/crate-5.1.0.tar.gz";
@@ -29,5 +31,15 @@ public class V510MetricsITest extends MetricsITest {
     @Override
     String getCrateDistributionURL() {
         return URL;
+    }
+
+    @Override
+    @Test
+    public void testConnectionsMetrics() {
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
     }
 }

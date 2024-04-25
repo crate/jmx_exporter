@@ -68,9 +68,22 @@ public class MetricsITest extends AbstractITest {
     public void testConnectionsMetrics() {
         assertMetricValue("crate_connections{protocol=\"psql\",property=\"open\",} ");
         assertMetricValue("crate_connections{protocol=\"psql\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"messagesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"bytesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"messagessent\",} ");
+        assertMetricValue("crate_connections{protocol=\"psql\",property=\"bytessent\",} ");
         assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
         assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"messagesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"bytesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"messagessent\",} ");
+        assertMetricValue("crate_connections{protocol=\"http\",property=\"bytessent\",} ");
         assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"total\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"messagesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"bytesreceived\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"messagessent\",} ");
+        assertMetricValue("crate_connections{protocol=\"transport\",property=\"bytessent\",} ");
     }
 
     @Test
