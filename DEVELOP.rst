@@ -60,5 +60,5 @@ To create a new release, you must:
 Maven Central Deployment
 ========================
 
-The artifacts can be uploaded to maven central using ``./gradlew uploadArchives closeAndReleaseRepository``.
+The artifacts can be uploaded to maven central using ``./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository`.
 This gradle task requires signing and sonatype credentials.
