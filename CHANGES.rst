@@ -5,6 +5,9 @@
 Unreleased
 ==========
 
+2024/04/25 1.1.0
+================
+
 - Added support for more detailed connection metrics:
     * ``HttpMessagesReceived``
     * ``HttpBytesReceived``
