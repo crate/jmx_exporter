@@ -19,7 +19,7 @@ Building the JAR
 
 Run::
 
-  $ ./gradlew buildJar
+  $ ./gradlew clean jar
 
 Testing
 =======
