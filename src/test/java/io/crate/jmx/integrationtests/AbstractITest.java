@@ -27,7 +27,6 @@ import io.crate.testing.CrateTestCluster;
 import io.crate.testing.CrateTestServer;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
@@ -52,7 +51,7 @@ public abstract class AbstractITest {
 
     protected static String metricsResponse;
 
-    private static int JMX_HTTP_PORT;
+    private static Integer JMX_HTTP_PORT;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -63,21 +62,25 @@ public abstract class AbstractITest {
         return LATEST_URL;
     }
 
-    @BeforeClass
-    public static void setupHttpPort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            JMX_HTTP_PORT = socket.getLocalPort();
-        }
-    }
-
     @Before
     public void setup() throws Throwable {
+        if (JMX_HTTP_PORT == null) {
+            try (ServerSocket socket = new ServerSocket(0)) {
+                JMX_HTTP_PORT = socket.getLocalPort();
+            }
+        }
         if (testCluster == null) {
             setUpClusterAndAgent(getCrateDistributionURL());
             metricsResponse = parseMartricsResponse();
         }
     }
 
+    @AfterClass
+    public static void shutdown() {
+        if (testCluster != null) {
+            testCluster.after();
+        }
+    }
 
     protected static void setUpClusterAndAgent(String url) throws Throwable {
         CrateTestCluster.Builder builder;
