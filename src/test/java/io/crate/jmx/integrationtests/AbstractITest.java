@@ -27,6 +27,7 @@ import io.crate.testing.CrateTestCluster;
 import io.crate.testing.CrateTestServer;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
 
@@ -37,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.ServerSocket;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +52,7 @@ public abstract class AbstractITest {
 
     protected static String metricsResponse;
 
-    private static final int JMX_HTTP_PORT = 17071;
+    private static int JMX_HTTP_PORT;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -59,6 +61,13 @@ public abstract class AbstractITest {
 
     String getCrateDistributionURL() {
         return LATEST_URL;
+    }
+
+    @BeforeClass
+    public static void setupHttpPort() throws IOException {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            JMX_HTTP_PORT = socket.getLocalPort();
+        }
     }
 
     @Before
