@@ -22,14 +22,15 @@
 
 package io.crate.jmx.recorder;
 
-import io.prometheus.client.Collector;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 import javax.management.openmbean.CompositeData;
-import java.util.List;
-import java.util.Set;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Collections;
+
+import io.prometheus.client.Collector;
 
 
 public class NodeInfo implements Recorder {
@@ -72,17 +73,30 @@ public class NodeInfo implements Recorder {
             String table = (String) compositeData.get("table");
             Long size = (Long) compositeData.get("size");
             String partitionIdent = (String) compositeData.get("partitionIdent");
-
-            metricSampleConsumer.accept(
-                    new Collector.MetricFamilySamples.Sample(
-                            domain + '_' + "node",
-                            List.of("name", "property", "id", "table", "partition_ident"),
-                            Arrays.asList("shard_info", "size", shardId.toString(), table, partitionIdent),
-                            size
-                    ),
-                    Collector.Type.GAUGE,
-                    "Information for Shards located on the Node."
-            );
+            if (compositeData.containsKey("schema")) {
+                String schema  = (String) compositeData.get("schema");
+                metricSampleConsumer.accept(
+                      new Collector.MetricFamilySamples.Sample(
+                              domain + '_' + "node",
+                              List.of("name", "property", "id", "schema", "table", "partition_ident"),
+                              Arrays.asList("shard_info", "size", shardId.toString(), schema, table, partitionIdent),
+                              size
+                      ),
+                      Collector.Type.GAUGE,
+                      "Information for Shards located on the Node."
+                );
+            } else {
+                metricSampleConsumer.accept(
+                      new Collector.MetricFamilySamples.Sample(
+                              domain + '_' + "node",
+                              List.of("name", "property", "id", "table", "partition_ident"),
+                              Arrays.asList("shard_info", "size", shardId.toString(), table, partitionIdent),
+                              size
+                      ),
+                      Collector.Type.GAUGE,
+                      "Information for Shards located on the Node."
+                );
+            }
         }
         return true;
     }
