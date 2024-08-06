@@ -5,6 +5,8 @@
 Unreleased
 ==========
 
+- Added a ``schema`` property to the ``crate_node{name="shard_info"}`` metrics.
+
 2024/04/25 1.1.0
 ================
 
