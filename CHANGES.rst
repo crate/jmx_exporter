@@ -2,8 +2,8 @@
  Changes for Crate JMX HTTP Exporter
 =====================================
 
-Unreleased
-==========
+2024/08/20 1.2.0
+================
 
 - Added a ``schema`` property to the ``crate_node{name="shard_info"}`` metrics.
 
