@@ -147,7 +147,10 @@ java {
 
 nexusPublishing {
     repositories {
-        sonatype()
+        sonatype {
+            username = project.hasProperty('sonatypeTokenUsername') ? sonatypeTokenUsername : ""
+            password = project.hasProperty('sonatypeTokenPassword') ? sonatypeTokenPassword : ""
+        }
     }
 }
 
