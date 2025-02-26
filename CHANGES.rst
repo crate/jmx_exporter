@@ -2,6 +2,15 @@
  Changes for Crate JMX HTTP Exporter
 =====================================
 
+Unreleased
+==========
+
+- Fixed an issue that caused both ``Content-Length`` and ``Transfer-Encoding:
+  chunked`` headers to be set for responses on the ``/metrics`` endpoint.
+  This could cause issues if using the jmx-exporter behind a NGINX proxy or
+  other strict clients.
+
+
 2024/08/20 1.2.0
 ================
 

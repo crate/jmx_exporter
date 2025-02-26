@@ -22,11 +22,6 @@
 
 package io.crate.jmx.http;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.common.TextFormat;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -36,6 +31,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+
+import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
 
 public class HttpMetricHandler implements HttpHandler {
 
@@ -67,15 +68,11 @@ public class HttpMetricHandler implements HttpHandler {
 
         ByteArrayOutputStream response = this.response.get();
         response.reset();
-        OutputStreamWriter osw = new OutputStreamWriter(response, StandardCharsets.UTF_8);
-        TextFormat.write004(osw, registry.filteredMetricFamilySamples(parseQuery(query)));
-        osw.flush();
-        osw.close();
-        response.flush();
-        response.close();
+        try (OutputStreamWriter osw = new OutputStreamWriter(response, StandardCharsets.UTF_8)) {
+            TextFormat.write004(osw, registry.filteredMetricFamilySamples(parseQuery(query)));
+        }
 
         t.getResponseHeaders().set("Content-Type", TextFormat.CONTENT_TYPE_004);
-        t.getResponseHeaders().set("Content-Length", String.valueOf(response.size()));
         if (HttpServer.shouldUseCompression(t)) {
             t.getResponseHeaders().set("Content-Encoding", "gzip");
             t.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
