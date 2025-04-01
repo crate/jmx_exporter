@@ -89,7 +89,7 @@ public class MetricsITest extends AbstractITest {
     @Test
     public void testThreadPoolsMetrics() {
         List<String> poolNames = Arrays.asList(
-                "generic", "search", "get", "snapshot", "management", "write",
+                "generic", "search", "snapshot", "management", "write",
                 "listener", "flush", "refresh", "force_merge", "fetch_shard_started", "fetch_shard_store");
         List<String> properties = Arrays.asList(
                 "poolSize", "largestPoolSize", "queueSize", "active", "completed", "rejected");
