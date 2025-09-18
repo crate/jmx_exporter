@@ -10,6 +10,9 @@ Unreleased
   This could cause issues if using the jmx-exporter behind a NGINX proxy or
   other strict clients.
 
+- Fixed an issue that caused the ``/ready`` endpoint to respond slowly if the
+  CrateDB node holds a lot of tables/shards.
+
 
 2024/08/20 1.2.0
 ================
