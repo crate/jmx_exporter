@@ -5,6 +5,11 @@
 Unreleased
 ==========
 
+None
+
+2025/09/18 1.2.1
+================
+
 - Fixed an issue that caused both ``Content-Length`` and ``Transfer-Encoding:
   chunked`` headers to be set for responses on the ``/metrics`` endpoint.
   This could cause issues if using the jmx-exporter behind a NGINX proxy or
