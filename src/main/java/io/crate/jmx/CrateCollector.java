@@ -64,7 +64,6 @@ public class CrateCollector extends Collector {
 
     private static final String CRATE_DOMAIN = "io.crate.monitoring";
     private static final String CRATE_DOMAIN_REPLACEMENT = "crate";
-    private static final String CRATE_MBEAN_PATTERN = CRATE_DOMAIN + ":*";
 
     private static final char SEP = '_';
     private static final Pattern SNAKE_CASE_PATTERN = Pattern.compile("([a-z0-9])([A-Z])");
@@ -83,9 +82,13 @@ public class CrateCollector extends Collector {
 
     @Override
     public List<MetricFamilySamples> collect() {
+        return collect("*");
+    }
+
+    public List<MetricFamilySamples> collect(String mBeanNamePattern) {
         metricFamilySamplesMap.clear();
         RecorderRegistry.resetRecorders();
-        for (ObjectName mBeanName : resolveMBeans()) {
+        for (ObjectName mBeanName : resolveMBean(CRATE_DOMAIN  + ":" + mBeanNamePattern)) {
             try {
                 MBeanInfo mBeanInfo = beanConn.getMBeanInfo(mBeanName);
                 scrapeMBean(mBeanInfo, mBeanName);
@@ -266,15 +269,15 @@ public class CrateCollector extends Collector {
         mfs.samples.add(sample);
     }
 
-    private static Set<ObjectName> resolveMBeans() {
+    private static Set<ObjectName> resolveMBean(String mBeanPattern) {
         MBeanServer beanConn = ManagementFactory.getPlatformMBeanServer();
         Set<ObjectName> mBeanNames = new HashSet<>();
         try {
-            for (ObjectInstance instance : beanConn.queryMBeans(new ObjectName(CRATE_MBEAN_PATTERN), null)) {
+            for (ObjectInstance instance : beanConn.queryMBeans(new ObjectName(mBeanPattern), null)) {
                 mBeanNames.add(instance.getObjectName());
             }
         } catch (MalformedObjectNameException e) {
-            LOGGER.log(Level.SEVERE, "Cannot resolve Crate MBean, malformed pattern " + CRATE_MBEAN_PATTERN, e);
+            LOGGER.log(Level.SEVERE, "Cannot resolve Crate MBean, malformed pattern " + mBeanPattern, e);
         }
         return mBeanNames;
     }

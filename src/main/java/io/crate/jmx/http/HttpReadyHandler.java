@@ -46,7 +46,7 @@ public class HttpReadyHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         // collect crate jmx values
         attributeValueStorage.reset();
-        crateCollector.collect();
+        crateCollector.collect("type=NodeStatus");
 
         exchange.getResponseHeaders().set("Content-Length", "0");
 
