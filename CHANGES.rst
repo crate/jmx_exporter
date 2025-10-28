@@ -5,7 +5,7 @@
 Unreleased
 ==========
 
-None
+- Added a ``primary`` flag to the ``crate_node{name="shard_info"}`` metrics.
 
 2025/09/18 1.2.1
 ================

@@ -73,13 +73,15 @@ public class NodeInfo implements Recorder {
             String table = (String) compositeData.get("table");
             Long size = (Long) compositeData.get("size");
             String partitionIdent = (String) compositeData.get("partitionIdent");
+            Boolean isPrimary = (Boolean) compositeData.get("primary");
+            String isPrimaryStr = isPrimary ? "TRUE" : "FALSE";
             if (compositeData.containsKey("schema")) {
                 String schema  = (String) compositeData.get("schema");
                 metricSampleConsumer.accept(
                       new Collector.MetricFamilySamples.Sample(
                               domain + '_' + "node",
-                              List.of("name", "property", "id", "schema", "table", "partition_ident"),
-                              Arrays.asList("shard_info", "size", shardId.toString(), schema, table, partitionIdent),
+                              List.of("name", "property", "id", "schema", "table", "partition_ident", "primary"),
+                              Arrays.asList("shard_info", "size", shardId.toString(), schema, table, partitionIdent, isPrimaryStr),
                               size
                       ),
                       Collector.Type.GAUGE,
@@ -89,8 +91,8 @@ public class NodeInfo implements Recorder {
                 metricSampleConsumer.accept(
                       new Collector.MetricFamilySamples.Sample(
                               domain + '_' + "node",
-                              List.of("name", "property", "id", "table", "partition_ident"),
-                              Arrays.asList("shard_info", "size", shardId.toString(), table, partitionIdent),
+                              List.of("name", "property", "id", "table", "partition_ident", "primary"),
+                              Arrays.asList("shard_info", "size", shardId.toString(), table, partitionIdent, isPrimaryStr),
                               size
                       ),
                       Collector.Type.GAUGE,

@@ -23,9 +23,7 @@
 package io.crate.jmx;
 
 import io.prometheus.client.Collector;
-import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.CollectorRegistry;
-
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -42,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,11 +47,12 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+@SuppressWarnings("deprecation")
 public class CrateCollectorTest {
 
     private CrateCollector crateCollector;
     private MBeanServer mbeanServer;
-    private MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
+    private final MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
 
     @Before
     public void setUpCollectorAndMbeanServer() {
@@ -136,7 +134,7 @@ public class CrateCollectorTest {
             )
         );
 
-        var queryTotalCount = allSamples.get(4);;
+        var queryTotalCount = allSamples.get(4);
         assertThat(queryTotalCount.name, is("crate_query_total_count"));
         assertThat(queryTotalCount.samples.size(), is(8));
 
@@ -272,22 +270,22 @@ public class CrateCollectorTest {
         shardStats.samples.sort(Comparator.comparing(c -> String.join("", c.labelValues)));
 
         var shardStatsInfo = shardStats.samples.get(0);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "test", "p1")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "test", "p1", "TRUE")));
         assertThat(shardStatsInfo.value, is(100.0));
 
         shardStatsInfo = shardStats.samples.get(1);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "test", "p1")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "test", "p1", "FALSE")));
         assertThat(shardStatsInfo.value, is(500.0));
 
         shardStatsInfo = shardStats.samples.get(2);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "test", "")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "test", "", "TRUE")));
         assertThat(shardStatsInfo.value, is(1000.0));
 
         Collector.MetricFamilySamples.Sample shardStatsSample = shardStats.samples.get(3);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident")));
+        assertThat(shardStatsSample.labelNames, is(Arrays.asList("name", "property")));
         assertThat(shardStatsSample.labelValues, is(Arrays.asList("shard_stats", "primaries")));
         assertThat(shardStatsSample.value, is(1.0));
 
@@ -448,6 +446,7 @@ public class CrateCollectorTest {
         assertThat(sample.value, is(42.0d));
     }
 
+    @SuppressWarnings("unused")
     public interface QueryStatsMBean {
 
         // Removed from 4.3.2, only exists for bwc
@@ -642,6 +641,7 @@ public class CrateCollectorTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public interface CrateDummyStatusMBean {
 
         long getSelectStats();
@@ -666,6 +666,7 @@ public class CrateCollectorTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public interface CrateDummyNodeInfoMXBean {
 
         long getClusterStateVersion();
@@ -675,7 +676,6 @@ public class CrateCollectorTest {
         ShardStats getShardStats();
 
         List<ShardInfo> getShardInfo();
-
     }
 
     private static class CrateDummyNodeInfo implements CrateDummyNodeInfoMXBean {
@@ -698,21 +698,19 @@ public class CrateCollectorTest {
 
         public List<ShardInfo> getShardInfo() {
             return List.of(
-                    new ShardInfo(1, "test", "p1", "STARTED", "STARTED", 100),
-                    new ShardInfo(2, "test", "p1", "STARTED", "STARTED", 500),
-                    new ShardInfo(3, "test", "", "STARTED", "STARTED", 1000)
+                    new ShardInfo(1, "test", "p1", "STARTED", "STARTED", 100, true),
+                    new ShardInfo(2, "test", "p1", "STARTED", "STARTED", 500, false),
+                    new ShardInfo(3, "test", "", "STARTED", "STARTED", 1000, true)
             );
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ShardStats {
 
         final int total;
-
         final int primaries;
-
         final int replicas;
-
         final int unassigned;
 
         @ConstructorProperties({"total", "primaries", "replicas", "unassigned"})
@@ -738,9 +736,9 @@ public class CrateCollectorTest {
         public int getUnassigned() {
             return unassigned;
         }
-
     }
 
+    @SuppressWarnings("unused")
     public static class ShardInfo {
         final int shardId;
         final String routingState;
@@ -748,15 +746,23 @@ public class CrateCollectorTest {
         final String table;
         final String partitionIdent;
         final long size;
+        final boolean primary;
 
-        @ConstructorProperties({"shardId", "table", "partitionIdent", "routingState", "state", "size"})
-        public ShardInfo(int shardId, String table, String partitionIdent, String routingState, String state, long size) {
+        @ConstructorProperties({"shardId", "table", "partitionIdent", "routingState", "state", "size", "primary"})
+        public ShardInfo(int shardId,
+                         String table,
+                         String partitionIdent,
+                         String routingState,
+                         String state,
+                         long size,
+                         boolean primary) {
             this.shardId = shardId;
             this.routingState = routingState;
             this.state = state;
             this.table = table;
             this.partitionIdent = partitionIdent;
             this.size = size;
+            this.primary = primary;
         }
 
         public int getShardId() {
@@ -782,8 +788,13 @@ public class CrateCollectorTest {
         public String getPartitionIdent() {
             return partitionIdent;
         }
+
+        public boolean isPrimary() {
+            return primary;
+        }
     }
 
+    @SuppressWarnings("unused")
     public interface ConnectionsMBean {
 
         long getHttpOpen();
@@ -797,6 +808,7 @@ public class CrateCollectorTest {
         long getTransportOpen();
     }
 
+    @SuppressWarnings("unused")
     private static class Connections implements ConnectionsMBean {
 
         static final String NAME = "io.crate.monitoring:type=Connections";
@@ -827,7 +839,7 @@ public class CrateCollectorTest {
         }
     }
 
-
+    @SuppressWarnings("unused")
     public static class ThreadPoolInfo {
 
         private final String name;
@@ -854,6 +866,7 @@ public class CrateCollectorTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public interface ThreadPoolsMXBean {
 
         ThreadPoolInfo getGeneric();
@@ -962,7 +975,6 @@ public class CrateCollectorTest {
         @Override
         public Stats getOperationsLog() {
             return new Stats("operationlog", 123456, 42);
-
         }
     }
 }
