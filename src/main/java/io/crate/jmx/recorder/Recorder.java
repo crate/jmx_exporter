@@ -36,6 +36,16 @@ public interface Recorder {
         return false;
     }
 
+    /**
+     * Adds a MBean attribute as a metric sample to the given consumer.
+     */
+    default boolean recordBean(String domain,
+                               String attrName,
+                               String[] beanValue,
+                               MetricSampleConsumer metricSampleConsumer) {
+        return false;
+    }
+
     default boolean recordBean(String domain,
                                String attrName,
                                CompositeData beanValue,

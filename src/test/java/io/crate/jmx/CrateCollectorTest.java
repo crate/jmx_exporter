@@ -24,6 +24,7 @@ package io.crate.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -308,6 +309,22 @@ public class CrateCollectorTest {
         assertThat(clusterStateVersionSample.name, is("crate_cluster_state_version"));
         Collector.MetricFamilySamples.Sample clusterStateSample = clusterStateVersionSample.samples.get(0);
         assertThat(clusterStateSample.value, is(3.0));
+
+        Collector.MetricFamilySamples isMaster = metrics.nextElement();
+        assertThat(isMaster.name, is("crate_is_master"));
+        Collector.MetricFamilySamples.Sample isMasterSample = isMaster.samples.get(0);
+        assertThat(isMasterSample.value, is(1.0));
+
+        Collector.MetricFamilySamples roles = metrics.nextElement();
+        assertThat(roles.name, is("crate_roles"));
+        Collector.MetricFamilySamples.Sample rolesSample = roles.samples.get(0);
+        assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_master_eligible"));
+        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("is_master_eligible"));
+        assertThat(rolesSample.value, is(1.0));
+        rolesSample = roles.samples.get(1);
+        assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_data"));
+        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("is_data"));
+        assertThat(rolesSample.value, is(1.0));
 
         // all string attributes of the NodeInfo MBean are ignored by intend, so no more elements must exists.
         assertThat(metrics.hasMoreElements(), is(false));
@@ -673,6 +690,10 @@ public class CrateCollectorTest {
 
         String getNodeId();
 
+        boolean isMaster();
+
+        List<String> getRoles();
+
         ShardStats getShardStats();
 
         List<ShardInfo> getShardInfo();
@@ -692,10 +713,22 @@ public class CrateCollectorTest {
             return "node1";
         }
 
+        @Override
+        public boolean isMaster() {
+            return true;
+        }
+
+        @Override
+        public List<String> getRoles() {
+            return List.of("master_eligible", "data");
+        }
+
+        @Override
         public ShardStats getShardStats() {
             return new ShardStats(3, 1, 2, 0, 0);
         }
 
+        @Override
         public List<ShardInfo> getShardInfo() {
             return List.of(
                     new ShardInfo(1, "test", "p1", "STARTED", "STARTED", 100, true),

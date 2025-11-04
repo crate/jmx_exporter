@@ -108,18 +108,49 @@ public class NodeInfo implements Recorder {
                               String attrName,
                               Number beanValue,
                               MetricSampleConsumer metricSampleConsumer) {
-        String fullname = domain + "_cluster_state_version";
         boolean validAttribute = false;
 
         if (attrName.equalsIgnoreCase("ClusterStateVersion")) {
             metricSampleConsumer.accept(
                     new Collector.MetricFamilySamples.Sample(
-                            fullname,
+                            domain + "_cluster_state_version",
                             Collections.emptyList(),
                             Collections.emptyList(),
                             beanValue.doubleValue()),
                     Collector.Type.UNKNOWN,
                     "Cluster information.");
+            validAttribute = true;
+        } else if (attrName.equalsIgnoreCase("master")) {
+            metricSampleConsumer.accept(
+                new Collector.MetricFamilySamples.Sample(
+                    domain + "_is_master",
+                    Collections.emptyList(),
+                    Collections.emptyList(),
+                    beanValue.byteValue()),
+                Collector.Type.UNKNOWN,
+                "Master elected information.");
+            validAttribute = true;
+        }
+        return validAttribute;
+    }
+
+    @Override
+    public boolean recordBean(String domain,
+                              String attrName,
+                              String[] beanValue,
+                              MetricSampleConsumer metricSampleConsumer) {
+        boolean validAttribute = false;
+        for (String value : beanValue) {
+            metricSampleConsumer.accept(
+                new Collector.MetricFamilySamples.Sample(
+                    domain + "_" + attrName.toLowerCase(Locale.US),
+                    List.of("is_" + value),
+                    List.of("is_" + value),
+                    1
+                ),
+                Collector.Type.UNKNOWN,
+                "Node role information."
+            );
             validAttribute = true;
         }
         return validAttribute;

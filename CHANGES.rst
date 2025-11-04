@@ -5,6 +5,20 @@
 Unreleased
 ==========
 
+- Added a ``is_master`` flag to ``crate_node`` metrics. e.g.:
+
+    ``crate_node{is_master=0.0}``
+    ``crate_node{is_master=1.0}``
+
+- Added flags to ``crate_node`` metrics which show the role of the node.
+  Each one of those are included in the metrics with value ``1.0`` if the
+  node has the corresponding role. If the node doesn't have a role, the role
+  is missing from the metrics. e.g.:
+
+    ``crate_node{is_master_eligible=1.0}``
+    ``crate_node{is_data=1.0}``
+    ``crate_node{is_master_eligible=1.0, is_data=1.0}``
+
 - Added a ``primary`` flag to the ``crate_node{name="shard_info"}`` metrics.
 
 2025/09/18 1.2.1
