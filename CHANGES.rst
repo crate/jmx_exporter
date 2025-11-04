@@ -5,6 +5,11 @@
 Unreleased
 ==========
 
+- None
+
+2025/11/04 1.2.2
+================
+
 - Added a ``is_master`` flag to ``crate_node`` metrics. e.g.:
 
     ``crate_node{is_master=0.0}``
