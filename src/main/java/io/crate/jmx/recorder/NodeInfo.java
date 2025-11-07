@@ -73,10 +73,10 @@ public class NodeInfo implements Recorder {
             String table = (String) compositeData.get("table");
             Long size = (Long) compositeData.get("size");
             String partitionIdent = (String) compositeData.get("partitionIdent");
-            String isPrimaryStr = "NULL";
+            String isPrimaryStr = "";
             if (compositeData.containsKey("primary")) {
                 Boolean isPrimary = (Boolean) compositeData.get("primary");
-                isPrimaryStr = isPrimary ? "TRUE" : "FALSE";
+                isPrimaryStr = isPrimary ? "true" : "false";
             }
             String schema = "";
             if (compositeData.containsKey("schema")) {
