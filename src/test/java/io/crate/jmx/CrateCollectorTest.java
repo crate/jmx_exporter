@@ -272,17 +272,17 @@ public class CrateCollectorTest {
 
         var shardStatsInfo = shardStats.samples.get(0);
         assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "doc", "test", "p1", "TRUE")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "doc", "test", "p1", "true")));
         assertThat(shardStatsInfo.value, is(100.0));
 
         shardStatsInfo = shardStats.samples.get(1);
         assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "doc", "test", "p1", "FALSE")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "doc", "test", "p1", "false")));
         assertThat(shardStatsInfo.value, is(500.0));
 
         shardStatsInfo = shardStats.samples.get(2);
         assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "doc", "test", "", "TRUE")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "doc", "test", "", "true")));
         assertThat(shardStatsInfo.value, is(1000.0));
 
         Collector.MetricFamilySamples.Sample shardStatsSample = shardStats.samples.get(3);

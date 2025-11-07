@@ -5,6 +5,10 @@
 Unreleased
 ==========
 
+- Changed values of flag ``primary``, for shard info, introduced with
+  ``1.2.2``, to lower case ``true``, ``false``, and empty string if
+  the attribute is missing.
+
 - Changed behavior of ``schema`` property of ``shard_info`` to always be
   included, with value of empty string, even for CrateDB versions < ``5.8.2``
   which didn't expose it.
