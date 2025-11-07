@@ -5,6 +5,10 @@
 Unreleased
 ==========
 
+- Changed behavior of ``schema`` property of ``shard_info`` to always be
+  included, with value of empty string, even for CrateDB versions < ``5.8.2``
+  which didn't expose it.
+  
 - Fixed an issue introduced with ``1.2.2`` that would cause an exception
   to be thrown, leading to metrics being unavailable at the ``/`` and
   ``/metrics`` endpoint.

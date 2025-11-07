@@ -271,18 +271,18 @@ public class CrateCollectorTest {
         shardStats.samples.sort(Comparator.comparing(c -> String.join("", c.labelValues)));
 
         var shardStatsInfo = shardStats.samples.get(0);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "test", "p1", "TRUE")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "1", "doc", "test", "p1", "TRUE")));
         assertThat(shardStatsInfo.value, is(100.0));
 
         shardStatsInfo = shardStats.samples.get(1);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "test", "p1", "FALSE")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "2", "doc", "test", "p1", "FALSE")));
         assertThat(shardStatsInfo.value, is(500.0));
 
         shardStatsInfo = shardStats.samples.get(2);
-        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "table", "partition_ident", "primary")));
-        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "test", "", "TRUE")));
+        assertThat(shardStatsInfo.labelNames, is(Arrays.asList("name", "property", "id", "schema", "table", "partition_ident", "primary")));
+        assertThat(shardStatsInfo.labelValues, is(Arrays.asList("shard_info", "size", "3", "doc", "test", "", "TRUE")));
         assertThat(shardStatsInfo.value, is(1000.0));
 
         Collector.MetricFamilySamples.Sample shardStatsSample = shardStats.samples.get(3);
@@ -731,9 +731,9 @@ public class CrateCollectorTest {
         @Override
         public List<ShardInfo> getShardInfo() {
             return List.of(
-                    new ShardInfo(1, "test", "p1", "STARTED", "STARTED", 100, true),
-                    new ShardInfo(2, "test", "p1", "STARTED", "STARTED", 500, false),
-                    new ShardInfo(3, "test", "", "STARTED", "STARTED", 1000, true)
+                    new ShardInfo(1, "doc", "test", "p1", "STARTED", "STARTED", 100, true),
+                    new ShardInfo(2, "doc", "test", "p1", "STARTED", "STARTED", 500, false),
+                    new ShardInfo(3, "doc", "test", "", "STARTED", "STARTED", 1000, true)
             );
         }
     }
@@ -776,6 +776,7 @@ public class CrateCollectorTest {
         final int shardId;
         final String routingState;
         final String state;
+        final String schema;
         final String table;
         final String partitionIdent;
         final long size;
@@ -783,6 +784,7 @@ public class CrateCollectorTest {
 
         @ConstructorProperties({"shardId", "table", "partitionIdent", "routingState", "state", "size", "primary"})
         public ShardInfo(int shardId,
+                         String schema,
                          String table,
                          String partitionIdent,
                          String routingState,
@@ -792,6 +794,7 @@ public class CrateCollectorTest {
             this.shardId = shardId;
             this.routingState = routingState;
             this.state = state;
+            this.schema = schema;
             this.table = table;
             this.partitionIdent = partitionIdent;
             this.size = size;
@@ -802,6 +805,9 @@ public class CrateCollectorTest {
             return shardId;
         }
 
+        public String getSchema() {
+            return schema;
+        }
         public String getTable() {
             return table;
         }
