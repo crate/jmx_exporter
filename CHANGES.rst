@@ -5,7 +5,9 @@
 Unreleased
 ==========
 
-- None
+- Fixed an issue introduced with ``1.2.2`` that would cause an exception
+  to be thrown, leading to metrics being unavailable at the ``/`` and
+  ``/metrics`` endpoint.
 
 2025/11/04 1.2.2
 ================
