@@ -139,7 +139,7 @@ public class NodeInfo implements Recorder {
                 new Collector.MetricFamilySamples.Sample(
                     domain + "_" + attrName.toLowerCase(Locale.US),
                     List.of("is_" + value),
-                    List.of("is_" + value),
+                    List.of("true"),
                     1
                 ),
                 Collector.Type.UNKNOWN,

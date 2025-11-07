@@ -319,11 +319,11 @@ public class CrateCollectorTest {
         assertThat(roles.name, is("crate_roles"));
         Collector.MetricFamilySamples.Sample rolesSample = roles.samples.get(0);
         assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_master_eligible"));
-        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("is_master_eligible"));
+        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("true"));
         assertThat(rolesSample.value, is(1.0));
         rolesSample = roles.samples.get(1);
         assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_data"));
-        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("is_data"));
+        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("true"));
         assertThat(rolesSample.value, is(1.0));
 
         // all string attributes of the NodeInfo MBean are ignored by intend, so no more elements must exists.
