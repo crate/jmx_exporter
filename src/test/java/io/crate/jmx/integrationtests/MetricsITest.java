@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -33,6 +34,15 @@ import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class MetricsITest extends AbstractITest {
+
+    @Test
+    public void test_isMaster_and_roles() throws Exception {
+        assertBusy(() -> {
+            metricsResponse = parseMetricsResponse();
+            assertMetricValue("crate_is_master ");
+            assertMetricValue("crate_roles{is_master_eligible=\"is_master_eligible\",} ");
+        }, 30, TimeUnit.SECONDS);
+    }
 
     @Test
     public void testQueryStatsMetrics() {
@@ -201,8 +211,22 @@ public class MetricsITest extends AbstractITest {
 
     @Test
     public void testRequestingMultipleTimesDoesNotResultInDuplicateMetrics() throws Exception {
-        String response = parseMartricsResponse();
+        String response = parseMetricsResponse();
         assertThat(response, containsString("crate_ready 1.0\n"));
         assertThat(response, not(containsString("crate_ready 1.0\ncrate_ready 1.0\n")));
+    }
+
+    @Test
+    public void testShardMetrics() throws Exception {
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"crate\",table=\"test_shards\",partition_ident=\"\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"crate\",table=\"test_shards\",partition_ident=\"\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"crate\",table=\"test_shards_parted\",partition_ident=\"04130\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"crate\",table=\"test_shards_parted\",partition_ident=\"04130\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"crate\",table=\"test_shards_parted\",partition_ident=\"04132\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"crate\",table=\"test_shards_parted\",partition_ident=\"04132\",primary=\"true\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"primaries\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"replicas\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"total\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"unassigned\",} ");
     }
 }

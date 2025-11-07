@@ -35,11 +35,33 @@ public class V570MetricsITest extends MetricsITest {
 
     @Override
     @Test
+    public void test_isMaster_and_roles() throws Exception {
+        // Versions < 6.2.x don't support these attributes
+    }
+
+    @Override
+    @Test
     public void testConnectionsMetrics() {
         assertMetricValue("crate_connections{protocol=\"psql\",property=\"open\",} ");
         assertMetricValue("crate_connections{protocol=\"psql\",property=\"total\",} ");
         assertMetricValue("crate_connections{protocol=\"http\",property=\"open\",} ");
         assertMetricValue("crate_connections{protocol=\"http\",property=\"total\",} ");
         assertMetricValue("crate_connections{protocol=\"transport\",property=\"open\",} ");
+    }
+
+    @Test
+    public void testShardMetrics() throws Exception {
+        // primary flag is not available on < 6.2.x
+        // schema property is always empty for < 5.8.2
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"\",table=\"test_shards\",partition_ident=\"\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"\",table=\"test_shards\",partition_ident=\"\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"\",table=\"test_shards_parted\",partition_ident=\"04130\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"\",table=\"test_shards_parted\",partition_ident=\"04130\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"0\",schema=\"\",table=\"test_shards_parted\",partition_ident=\"04132\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_info\",property=\"size\",id=\"1\",schema=\"\",table=\"test_shards_parted\",partition_ident=\"04132\",primary=\"\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"primaries\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"replicas\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"total\",} ");
+        assertMetricValue("crate_node{name=\"shard_stats\",property=\"unassigned\",} ");
     }
 }
