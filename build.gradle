@@ -34,6 +34,7 @@ dependencies {
     implementation "io.prometheus:simpleclient_hotspot:${versions.prometheus_lib}"
 
     testImplementation "io.crate:crate-testing:${versions.crate_testing}"
+    testImplementation "org.postgresql:postgresql:42.7.8"
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.hamcrest:hamcrest:${versions.hamcrest}"
     testImplementation ("com.carrotsearch.randomizedtesting:randomizedtesting-runner:${versions.randomizedtesting}") {

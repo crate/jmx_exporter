@@ -39,6 +39,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -71,7 +76,8 @@ public abstract class AbstractITest {
         }
         if (testCluster == null) {
             setUpClusterAndAgent(getCrateDistributionURL());
-            metricsResponse = parseMartricsResponse();
+            setupTables();
+            metricsResponse = parseMetricsResponse();
         }
     }
 
@@ -91,7 +97,31 @@ public abstract class AbstractITest {
         attachAgent(pid);
     }
 
-    protected static String parseMartricsResponse() throws Exception {
+    private void setupTables() throws SQLException {
+        int jdbcPort = testCluster.servers().iterator().next().psqlPort();
+        String jdbcConnectionString = "jdbc:postgresql://localhost:" + jdbcPort + "/crate";
+        String user = "crate";
+        String password = "";
+        try (Connection connection = DriverManager.getConnection(jdbcConnectionString, user, password)) {
+            connection.createStatement().execute("CREATE TABLE test_shards(a int) CLUSTERED INTO 2 shards");
+            connection.createStatement().execute(
+                "INSERT INTO test_shards " +
+                "SELECT * FROM generate_series(1, 10, 1)");
+            connection.createStatement().execute("REFRESH TABLE test_shards");
+
+            connection.createStatement().execute("CREATE TABLE test_shards_parted(a int, " +
+                "p int generated always as a % 2) PARTITIONED BY (p) CLUSTERED INTO 2 shards");
+            connection.createStatement().execute(
+                "INSERT INTO test_shards_parted(a) " +
+                    "SELECT * FROM generate_series(1, 10, 1)");
+            connection.createStatement().execute("REFRESH TABLE test_shards_parted");
+        } catch (SQLException e) {
+            System.err.println("Failed to establish database connection");
+            throw e;
+        }
+    }
+
+    protected static String parseMetricsResponse() throws Exception {
         HttpURLConnection connection = (HttpURLConnection) randomJmxUrlFromServers("/metrics").openConnection();
         assertThat(connection.getResponseCode(), is(200));
         return parseResponse(connection.getInputStream());
@@ -148,7 +178,7 @@ public abstract class AbstractITest {
     }
 
     void assertMetricValue(String metricString) {
-        int startIdx = metricsResponse.indexOf(metricString);
+        int startIdx = metricsResponse.lastIndexOf(metricString);
         assertThat(metricString + " not found in response", startIdx, greaterThanOrEqualTo(-1));
         int endIdx = metricsResponse.indexOf("\n", startIdx);
         String metricValueStr = metricsResponse.substring(startIdx + metricString.length(), endIdx);
@@ -157,5 +187,42 @@ public abstract class AbstractITest {
                 metricValueStr.matches("^-?\\d+.\\d+(E\\d+)?"),
                 is(true)
         );
+    }
+
+    static void assertBusy(CheckedRunnable<Exception> codeBlock, long maxWaitTime, TimeUnit unit) throws Exception {
+        long maxTimeInMillis = TimeUnit.MILLISECONDS.convert(maxWaitTime, unit);
+        long iterations = Math.max(Math.round(Math.log10(maxTimeInMillis) / Math.log10(2)), 1);
+        long timeInMillis = 1;
+        long sum = 0;
+        List<AssertionError> failures = new ArrayList<>();
+        for (int i = 0; i < iterations; i++) {
+            try {
+                codeBlock.run();
+                return;
+            } catch (AssertionError e) {
+                failures.add(e);
+            }
+            sum += timeInMillis;
+            Thread.sleep(timeInMillis);
+            timeInMillis *= 2;
+        }
+        timeInMillis = maxTimeInMillis - sum;
+        Thread.sleep(Math.max(timeInMillis, 0));
+        try {
+            codeBlock.run();
+        } catch (AssertionError e) {
+            String msg = e.getMessage();
+            for (AssertionError failure : failures) {
+                if (!failure.getMessage().equals(msg)) {
+                    e.addSuppressed(failure);
+                }
+            }
+            throw e;
+        }
+    }
+
+    @FunctionalInterface
+    interface CheckedRunnable<E extends Exception> {
+        void run() throws E;
     }
 }
