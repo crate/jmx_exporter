@@ -5,11 +5,14 @@
 Unreleased
 ==========
 
-- Changed the "value" of the ``roles`` introduced with ``1.2.2``` to be
+- Changed the "value" of the ``roles`` introduced with ``1.2.2`` to be
   ``true`` instead of repeating the name of the role. e.g.:
-    ``assertMetricValue("crate_roles{is_master_eligible=\"is_master_eligible\",}``
+
+      ``assertMetricValue("crate_roles{is_master_eligible=\"is_master_eligible\",}``
+
   changed to:
-    ``assertMetricValue("crate_roles{is_master_eligible=\"true\",}``
+
+      ``assertMetricValue("crate_roles{is_master_eligible=\"true\",}``
 
 - Changed values of flag ``primary``, for shard info, introduced with
   ``1.2.2``, to lower case ``true``, ``false``, and empty string if
