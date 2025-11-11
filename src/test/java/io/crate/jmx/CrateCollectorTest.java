@@ -24,8 +24,6 @@ package io.crate.jmx;
 
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
-import org.hamcrest.CoreMatchers;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 
 @SuppressWarnings("deprecation")
@@ -101,7 +100,7 @@ public class CrateCollectorTest {
         allSamples.sort(Comparator.comparing(x -> x.name));
         assertThat(
             allSamples.stream().map(x -> x.name) .collect(Collectors.toList()),
-            Matchers.contains(
+            contains(
                 "crate_queries",
                 "crate_query_duration_seconds",
                 "crate_query_failed_count",
@@ -116,14 +115,14 @@ public class CrateCollectorTest {
         assertThat(queryFailedCount.samples.size(), is(8));
         for (var sample : queryFailedCount.samples) {
             assertThat(sample.value, is(1.0));
-            assertThat(sample.labelNames, hasItem(is("query")));
+            assertThat(sample.labelNames, contains(is("query")));
         }
         assertThat(
             queryFailedCount.samples.stream()
                 .map(x -> String.join(", ", x.labelValues))
                 .sorted()
                 .collect(Collectors.toList()),
-            Matchers.contains(
+            contains(
                 "Copy",
                 "DDL",
                 "Delete",
@@ -141,7 +140,7 @@ public class CrateCollectorTest {
 
         for (var sample : queryTotalCount.samples) {
             assertThat(sample.value, is(1.0));
-            assertThat(sample.labelNames, hasItem(is("query")));
+            assertThat(sample.labelNames, contains(is("query")));
         }
 
         assertThat(
@@ -149,7 +148,7 @@ public class CrateCollectorTest {
                 .map(x -> String.join(", ", x.labelValues))
                 .sorted()
                 .collect(Collectors.toList()),
-            Matchers.contains(
+            contains(
                 "Copy",
                 "DDL",
                 "Delete",
@@ -175,7 +174,6 @@ public class CrateCollectorTest {
         // metrics crate_query_sum_of_durations_millis is removed from 4.3.2, it only exists for bwc reasons with older versions
         assertThat(queryDurationSeconds.name, is("crate_query_duration_seconds"));
         assertThat(queryDurationSeconds.samples.size(), is(1));
-
     }
 
     @Test
@@ -318,12 +316,8 @@ public class CrateCollectorTest {
         Collector.MetricFamilySamples roles = metrics.nextElement();
         assertThat(roles.name, is("crate_roles"));
         Collector.MetricFamilySamples.Sample rolesSample = roles.samples.get(0);
-        assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_master_eligible"));
-        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("true"));
-        assertThat(rolesSample.value, is(1.0));
-        rolesSample = roles.samples.get(1);
-        assertThat(rolesSample.labelNames, CoreMatchers.hasItems("is_data"));
-        assertThat(rolesSample.labelValues, CoreMatchers.hasItems("true"));
+        assertThat(rolesSample.labelNames, contains( "is_data", "is_master_eligible"));
+        assertThat(rolesSample.labelValues, contains("true", "true"));
         assertThat(rolesSample.value, is(1.0));
 
         // all string attributes of the NodeInfo MBean are ignored by intend, so no more elements must exists.
