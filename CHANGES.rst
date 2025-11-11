@@ -5,6 +5,11 @@
 Unreleased
 ==========
 
+- None
+
+2025/11/11 1.2.3
+================
+
 - Changed the value of ``roles`` introduced with ``1.2.2`` to contain
   all roles of the node in one metric, and for each role to have the
   value ``true`` instead of repeating the name of the role. These
