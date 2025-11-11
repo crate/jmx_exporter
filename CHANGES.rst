@@ -5,14 +5,18 @@
 Unreleased
 ==========
 
-- Changed the "value" of the ``roles`` introduced with ``1.2.2`` to be
-  ``true`` instead of repeating the name of the role. e.g.:
+- Changed the value of ``roles`` introduced with ``1.2.2`` to contain
+  all roles of the node in one metric, and for each role to have the
+  value ``true`` instead of repeating the name of the role. These
+  changes facilitate easier queries in Grafana, to determine which
+  nodes have certain roles. e.g.:
 
-      ``assertMetricValue("crate_roles{is_master_eligible=\"is_master_eligible\",}``
+      ``crate_roles{is_master_eligible=\"is_master_eligible\",}``
+      ``crate_roles{is_data=\"is_data\",}``
 
   changed to:
 
-      ``assertMetricValue("crate_roles{is_master_eligible=\"true\",}``
+      ``crate_roles{is_data=\"true\",is_master_eligible=\"true\",}``
 
 - Changed values of flag ``primary``, for shard info, introduced with
   ``1.2.2``, to lower case ``true``, ``false``, and empty string if

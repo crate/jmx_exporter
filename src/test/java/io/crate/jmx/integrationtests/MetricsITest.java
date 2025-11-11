@@ -40,8 +40,7 @@ public class MetricsITest extends AbstractITest {
         assertBusy(() -> {
             metricsResponse = parseMetricsResponse();
             assertMetricValue("crate_is_master ");
-            assertMetricValue("crate_roles{is_master_eligible=\"true\",} ");
-            assertMetricValue("crate_roles{is_data=\"true\",} ");
+            assertMetricValue("crate_roles{is_data=\"true\",is_master_eligible=\"true\",} ");
         }, 30, TimeUnit.SECONDS);
     }
 

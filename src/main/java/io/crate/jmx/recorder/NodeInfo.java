@@ -22,6 +22,7 @@
 
 package io.crate.jmx.recorder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -134,18 +135,25 @@ public class NodeInfo implements Recorder {
                               String[] beanValue,
                               MetricSampleConsumer metricSampleConsumer) {
         boolean validAttribute = false;
+        List<String> roles = new ArrayList<>();
+        List<String> trueList = new ArrayList<>();
         for (String value : beanValue) {
+            roles.add("is_" + value);
+            trueList.add("true");
+        }
+        if (!roles.isEmpty()) {
+            validAttribute = true;
+            Collections.sort(roles);
             metricSampleConsumer.accept(
                 new Collector.MetricFamilySamples.Sample(
                     domain + "_" + attrName.toLowerCase(Locale.US),
-                    List.of("is_" + value),
-                    List.of("true"),
+                    roles,
+                    trueList,
                     1
                 ),
                 Collector.Type.UNKNOWN,
                 "Node role information."
             );
-            validAttribute = true;
         }
         return validAttribute;
     }
