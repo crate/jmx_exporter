@@ -64,4 +64,35 @@ public class V570MetricsITest extends MetricsITest {
         assertMetricValue("crate_node{name=\"shard_stats\",property=\"total\",} ");
         assertMetricValue("crate_node{name=\"shard_stats\",property=\"unassigned\",} ");
     }
+
+    @Test
+    public void testQueryStatsMetrics() {
+        // crate_query_affected_row_count is not avaulable on < 6.2.x
+        assertMetricValue("crate_query_total_count{query=\"Select\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Update\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Delete\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Insert\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Management\",} ");
+        assertMetricValue("crate_query_total_count{query=\"DDL\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Copy\",} ");
+        assertMetricValue("crate_query_total_count{query=\"Undefined\",} ");
+
+        assertMetricValue("crate_query_failed_count{query=\"Select\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Update\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Delete\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Insert\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Management\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"DDL\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Copy\",} ");
+        assertMetricValue("crate_query_failed_count{query=\"Undefined\",} ");
+
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Select\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Update\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Delete\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Insert\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Management\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"DDL\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Copy\",} ");
+        assertMetricValue("crate_query_sum_of_durations_millis{query=\"Undefined\",} ");
+    }
 }

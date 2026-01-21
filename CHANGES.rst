@@ -5,7 +5,9 @@
 Unreleased
 ==========
 
-- None
+- Added a new ``QueryStats`` metric reporting the total number of
+  affected rows of all statement executions grouped by query types.
+  This metric is only available on CrateDB versions >= 6.2.
 
 2025/11/11 1.2.3
 ================
