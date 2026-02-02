@@ -99,7 +99,7 @@ public class CrateCollectorTest {
         }
         allSamples.sort(Comparator.comparing(x -> x.name));
         assertThat(
-            allSamples.stream().map(x -> x.name) .collect(Collectors.toList()),
+            allSamples.stream().map(x -> x.name).collect(Collectors.toList()),
             contains(
                 "crate_queries",
                 "crate_query_duration_seconds",

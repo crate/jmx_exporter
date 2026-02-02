@@ -32,83 +32,81 @@ public class QueryStats implements Recorder {
 
     static final String MBEAN_NAME = "QueryStats";
 
-    private static final Pattern QUERIES_PER_SECONDS_PATTERN = Pattern.compile("(.+)QueryFrequency");
-    private static final Pattern QUERIES_DURATION_PATTERN = Pattern.compile("(.+)QueryAverageDuration");
-    private static final Pattern QUERIES_TOTAL_COUNT_PATTERN = Pattern.compile("(.+)QueryTotalCount");
-    private static final Pattern QUERIES_AFFECTED_ROW_COUNT_PATTERN = Pattern.compile("(.+)QueryAffectedRowCount");
-    private static final Pattern QUERIES_FAILED_COUNT_PATTERN = Pattern.compile("(.+)QueryFailedCount");
-    private static final Pattern QUERIES_SUM_OF_DURATIONS_PATTERN = Pattern.compile("(.+)QuerySumOfDurations");
+    private static final Pattern QUERIES = Pattern.compile("(.+)Query(Frequency|AverageDuration|TotalCount|AffectedRowCount|FailedCount|SumOfDurations)");
+    private static final String FREQUENCY = "Frequency";
+    private static final String AVG_DURATION = "AverageDuration";
+    private static final String TOTAL_COUNT = "TotalCount";
+    private static final String AFFECTED_ROW_COUNT = "AffectedRowCount";
+    private static final String FAILED_COUNT = "FailedCount";
+    private static final String SUM_OF_DURATIONS = "SumOfDurations";
 
     @Override
     public boolean recordBean(String domain,
                               String attrName,
                               Number beanValue,
                               MetricSampleConsumer metricSampleConsumer) {
-        Matcher matcher = QUERIES_PER_SECONDS_PATTERN.matcher(attrName);
+        Matcher matcher = QUERIES.matcher(attrName);
         if (matcher.matches()) {
-            recordBean(
-                    domain,
-                    "queries",
-                    matcher.group(1),
-                    beanValue,
-                    "Queries per second for a given query type.",
-                    metricSampleConsumer);
-            return true;
-        }
-        matcher = QUERIES_DURATION_PATTERN.matcher(attrName);
-        if (matcher.matches()) {
-            recordBean(
-                    domain,
-                    "query_duration_seconds",
-                    matcher.group(1),
-                    beanValue,
-                    "The average query duration for a given query type.",
-                    metricSampleConsumer);
-            return true;
-        }
-        matcher = QUERIES_TOTAL_COUNT_PATTERN.matcher(attrName);
-        if (matcher.matches()) {
-            recordBean(
-                    domain,
-                    "query_total_count",
-                    matcher.group(1),
-                    beanValue,
-                    "The total number of queries that were executed for a given query type.",
-                    metricSampleConsumer);
-            return true;
-        }
-        matcher = QUERIES_AFFECTED_ROW_COUNT_PATTERN.matcher(attrName);
-        if (matcher.matches()) {
-            recordBean(
-                domain,
-                "query_affected_row_count",
-                matcher.group(1),
-                beanValue,
-                "The total number of affected rows of all statement executions for a given query type.",
-                metricSampleConsumer);
-            return true;
-        }
-        matcher = QUERIES_FAILED_COUNT_PATTERN.matcher(attrName);
-        if (matcher.matches()) {
-            recordBean(
-                    domain,
-                    "query_failed_count",
-                    matcher.group(1),
-                    beanValue,
-                    "The total number of queries that failed to complete successfully for a given query type.",
-                    metricSampleConsumer);
-            return true;
-        }
-        matcher = QUERIES_SUM_OF_DURATIONS_PATTERN.matcher(attrName);
-        if (matcher.matches()) {
-            recordBean(
-                    domain,
-                    "query_sum_of_durations_millis",
-                    matcher.group(1),
-                    beanValue,
-                    "The sum of durations of all executed queries of a given type, expressed in milliseconds.",
-                    metricSampleConsumer);
-            return true;
+            String metric = matcher.group(2);
+            String label = matcher.group(1);
+            switch (metric) {
+                case FREQUENCY:
+                    recordBean(
+                        domain,
+                        "queries",
+                        label,
+                        beanValue,
+                        "Queries per second for a given query type.",
+                        metricSampleConsumer);
+                    return true;
+                case AVG_DURATION:
+                    recordBean(
+                        domain,
+                        "query_duration_seconds",
+                        label,
+                        beanValue,
+                        "The average query duration for a given query type.",
+                        metricSampleConsumer);
+                    return true;
+                case TOTAL_COUNT:
+                    recordBean(
+                        domain,
+                        "query_total_count",
+                        label,
+                        beanValue,
+                        "The total number of queries that were executed for a given query type.",
+                        metricSampleConsumer);
+                    return true;
+                case AFFECTED_ROW_COUNT:
+                    recordBean(
+                        domain,
+                        "query_affected_row_count",
+                        label,
+                        beanValue,
+                        "The total number of affected rows of all statement executions for a given query type.",
+                        metricSampleConsumer);
+                    return true;
+                case FAILED_COUNT:
+                    recordBean(
+                        domain,
+                        "query_failed_count",
+                        label,
+                        beanValue,
+                        "The total number of queries that failed to complete successfully for a given query type.",
+                        metricSampleConsumer);
+                    return true;
+                case SUM_OF_DURATIONS:
+                    recordBean(
+                        domain,
+                        "query_sum_of_durations_millis",
+                        label,
+                        beanValue,
+                        "The sum of durations of all executed queries of a given type, expressed in milliseconds.",
+                        metricSampleConsumer);
+                    return true;
+                default:
+                    return false;
+            }
         }
         return false;
     }
