@@ -28,6 +28,15 @@ Run the unit and integration tests like so::
 
   $ ./gradlew test
 
+By default, integration tests run against the latest CrateDB version. To test against a specific CrateDB version::
+
+  $ ./gradlew test -P crateDbVersion=X.Y.Z
+
+Note::
+
+  If running tests on ARM Mac, there may not be a crate release for aarch64_mac available. The tests will fall back to
+  a x64_mac release. In this case, you need Rosetta 2 installed for the tests to work.
+
 .. _Gradle: https://gradle.org/
 
 

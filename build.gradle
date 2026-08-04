@@ -56,6 +56,9 @@ test {
     testLogging {
         exceptionFormat = 'full'
     }
+    if (project.hasProperty('crateDbVersion')) {
+      systemProperty 'crateDbVersion', project.property('crateDbVersion')
+    }
 }
 
 idea {

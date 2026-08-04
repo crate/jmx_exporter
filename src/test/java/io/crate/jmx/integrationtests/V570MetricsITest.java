@@ -26,11 +26,9 @@ import org.junit.Test;
 
 public class V570MetricsITest extends MetricsITest {
 
-    private static final String URL = "https://cdn.crate.io/downloads/releases/crate-5.7.0.tar.gz";
-
     @Override
-    String getCrateDistributionURL() {
-        return URL;
+    String getCrateDistributionVersion() {
+        return "5.7.0";
     }
 
     @Override
