@@ -51,9 +51,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 public abstract class AbstractITest {
-
-    protected static final String LATEST_URL = "https://cdn.crate.io/downloads/releases/nightly/crate-latest.tar.gz";
-
     protected static String metricsResponse;
 
     private static Integer JMX_HTTP_PORT;
@@ -63,8 +60,9 @@ public abstract class AbstractITest {
 
     private static CrateTestCluster testCluster;
 
-    String getCrateDistributionURL() {
-        return LATEST_URL;
+    String getCrateDistributionVersion() {
+        String version = System.getProperty("crateDbVersion");
+        return version == null ? "latest" : version;
     }
 
     @Before
@@ -75,7 +73,7 @@ public abstract class AbstractITest {
             }
         }
         if (testCluster == null) {
-            setUpClusterAndAgent(getCrateDistributionURL());
+            setUpClusterAndAgent(getCrateDistributionVersion());
             setupTables();
             metricsResponse = parseMetricsResponse();
         }
@@ -88,9 +86,9 @@ public abstract class AbstractITest {
         }
     }
 
-    protected static void setUpClusterAndAgent(String url) throws Throwable {
+    protected static void setUpClusterAndAgent(String version) throws Throwable {
         CrateTestCluster.Builder builder;
-        builder = CrateTestCluster.fromURL(url);
+        builder = CrateTestCluster.fromVersion(version);
         testCluster = builder.keepWorkingDir(false).build();
         testCluster.before();
         long pid = testCluster.randomServer().pid().toCompletableFuture().get(5, TimeUnit.SECONDS);
