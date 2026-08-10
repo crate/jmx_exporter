@@ -22,24 +22,9 @@
 
 package io.crate.jmx;
 
-import io.crate.jmx.recorder.Recorder;
-import io.crate.jmx.recorder.RecorderRegistry;
-import io.prometheus.client.Collector;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.CompositeDataSupport;
 import java.lang.management.ManagementFactory;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,6 +37,22 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.IntrospectionException;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeDataSupport;
+
+import io.crate.jmx.recorder.Recorder;
+import io.crate.jmx.recorder.RecorderRegistry;
+import io.prometheus.client.Collector;
 
 /**
  * A prometheus jmx {@link Collector} implementation for CrateDB specific JMX metrics.
@@ -186,7 +187,7 @@ public class CrateCollector extends Collector {
             recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData[]) beanValue);
         } else if ((beanValue instanceof String) == false) {
             // only log on non-string values, string values are ignored by intend
-            LOGGER.log(Level.SEVERE, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
+            LOGGER.log(Level.WARNING, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
         }
     }
 
@@ -200,7 +201,7 @@ public class CrateCollector extends Collector {
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
             if (supportedAttribute == false) {
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
             }
         } else {
@@ -220,7 +221,7 @@ public class CrateCollector extends Collector {
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
             if (supportedAttribute == false) {
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.WARNING,
                     "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + Arrays.toString(beanValue));
             }
         } else {
@@ -238,11 +239,11 @@ public class CrateCollector extends Collector {
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
             if (supportedAttribute == false) {
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
             }
         } else {
-            LOGGER.log(Level.SEVERE,
+            LOGGER.log(Level.WARNING,
                     "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
         }
     }
@@ -254,11 +255,11 @@ public class CrateCollector extends Collector {
         if (recorder != null) {
             boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
             if (supportedAttribute == false) {
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + Arrays.toString(beanValue));
             }
         } else {
-            LOGGER.log(Level.SEVERE,
+            LOGGER.log(Level.WARNING,
                     "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + Arrays.toString(beanValue));
         }
     }
