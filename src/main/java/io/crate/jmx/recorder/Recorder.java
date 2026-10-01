@@ -59,10 +59,4 @@ public interface Recorder {
                                MetricSampleConsumer metricSampleConsumer) {
         return false;
     }
-
-    /**
-     * Clears any internal structures before new collect()
-     */
-    default void reset() {
-    }
 }

@@ -47,8 +47,4 @@ public final class RecorderRegistry {
 
     private RecorderRegistry() {
     }
-
-    public static void resetRecorders() {
-        REGISTRY.values().forEach(Recorder::reset);
-    }
 }

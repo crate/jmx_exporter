@@ -82,10 +82,9 @@ public class Agent {
         SERVER.registerHandler("/", mHandler);
         SERVER.registerHandler("/metrics", mHandler);
 
-        MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
-        CrateCollector crateCollector = new CrateCollector(beanAttributeValueStorage::put).register();
+        CrateCollector crateCollector = new CrateCollector().register();
 
-        HttpHandler readyHandler = new HttpReadyHandler(crateCollector, beanAttributeValueStorage);
+        HttpHandler readyHandler = new HttpReadyHandler(crateCollector);
         SERVER.registerHandler("/ready", readyHandler);
 
         SERVER.start(true);

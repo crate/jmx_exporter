@@ -5,7 +5,9 @@
 Unreleased
 ==========
 
-- None
+- Fixed an issue that caused ``/metrics`` to return empty, truncated or
+  duplicated responses, and ``/ready`` to wrongly return ``501``, when
+  receiving concurrent requests.
 
 
 2026/02/02 1.2.4

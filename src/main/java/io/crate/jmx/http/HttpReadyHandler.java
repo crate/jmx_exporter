@@ -25,32 +25,30 @@ package io.crate.jmx.http;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import io.crate.jmx.CrateCollector;
-import io.crate.jmx.MBeanAttributeValueStorage;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HttpReadyHandler implements HttpHandler {
 
     private static final String READY_ATTR_NAME = "NodeStatus_Ready";
 
     private final CrateCollector crateCollector;
-    private final MBeanAttributeValueStorage attributeValueStorage;
 
-    public HttpReadyHandler(CrateCollector crateCollector, MBeanAttributeValueStorage attributeValueStorage) {
+    public HttpReadyHandler(CrateCollector crateCollector) {
         this.crateCollector = crateCollector;
-        this.attributeValueStorage = attributeValueStorage;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        // collect crate jmx values
-        attributeValueStorage.reset();
-        crateCollector.collect("type=NodeStatus");
+        Map<String, Object> attributeValues = new HashMap<>();
+        crateCollector.collect("type=NodeStatus", attributeValues::put);
 
         exchange.getResponseHeaders().set("Content-Length", "0");
 
-        Object readyValue = attributeValueStorage.get(READY_ATTR_NAME);
+        Object readyValue = attributeValues.get(READY_ATTR_NAME);
         if (readyValue instanceof Boolean) {
             Boolean boolVal = (Boolean) readyValue;
             if (boolVal) {
