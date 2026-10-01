@@ -73,35 +73,56 @@ public class CrateCollector extends Collector {
     private static final Pattern MULTIPLE_UNDERSCORES = Pattern.compile("__+");
 
     private final MBeanServer beanConn;
-    private final BiConsumer<String, Object> beanValueConsumer;
-    private final Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
     private final MBeanPropertyCache MBeanPropertyCache = new MBeanPropertyCache();
 
-    CrateCollector(BiConsumer<String, Object> beanValueConsumer) {
+    /**
+     * State of a single {@link #collect(String, BiConsumer)} call.
+     * <p>
+     * collect() is called concurrently by the HTTP server threads (e.g. for
+     * /metrics and /ready), so each call must gather its samples separately.
+     */
+    private static final class Scrape {
+
+        private final Map<String, MetricFamilySamples> metricFamilySamplesMap = new HashMap<>();
+        private final BiConsumer<String, Object> beanValueConsumer;
+
+        private Scrape(BiConsumer<String, Object> beanValueConsumer) {
+            this.beanValueConsumer = beanValueConsumer;
+        }
+
+        private void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
+            MetricFamilySamples mfs = metricFamilySamplesMap.get(sample.name);
+            if (mfs == null) {
+                mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<>());
+                metricFamilySamplesMap.put(sample.name, mfs);
+            }
+            mfs.samples.add(sample);
+        }
+    }
+
+    CrateCollector() {
         beanConn = ManagementFactory.getPlatformMBeanServer();
-        this.beanValueConsumer = beanValueConsumer;
     }
 
     @Override
     public List<MetricFamilySamples> collect() {
-        return collect("*");
+        return collect("*", (name, value) -> { });
     }
 
-    public List<MetricFamilySamples> collect(String mBeanNamePattern) {
-        metricFamilySamplesMap.clear();
-        RecorderRegistry.resetRecorders();
+    public List<MetricFamilySamples> collect(String mBeanNamePattern, BiConsumer<String, Object> beanValueConsumer) {
+        Scrape scrape = new Scrape(beanValueConsumer);
         for (ObjectName mBeanName : resolveMBean(CRATE_DOMAIN  + ":" + mBeanNamePattern)) {
             try {
                 MBeanInfo mBeanInfo = beanConn.getMBeanInfo(mBeanName);
-                scrapeMBean(mBeanInfo, mBeanName);
+                scrapeMBean(mBeanInfo, mBeanName, scrape);
             } catch (InstanceNotFoundException | IntrospectionException | ReflectionException e) {
                 LOGGER.log(Level.SEVERE, "Cannot get MBean info for " + mBeanName.getCanonicalName(), e);
             }
         }
-        return new ArrayList<>(metricFamilySamplesMap.values());
+        return new ArrayList<>(scrape.metricFamilySamplesMap.values());
     }
 
-    private void scrapeMBean(MBeanInfo mBeanInfo, ObjectName mBeanName) {
+    private void scrapeMBean(MBeanInfo mBeanInfo, ObjectName mBeanName, Scrape scrape) {
         MBeanAttributeInfo[] attrInfos = mBeanInfo.getAttributes();
 
         for (MBeanAttributeInfo attr : attrInfos) {
@@ -126,7 +147,8 @@ public class CrateCollector extends Collector {
                 attr.getName(),
                 attr.getType(),
                 attr.getDescription(),
-                value
+                value,
+                scrape
             );
         }
     }
@@ -136,13 +158,14 @@ public class CrateCollector extends Collector {
                                   String attrName,
                                   String attrType,
                                   String attrDescription,
-                                  Object value) {
+                                  Object value,
+                                  Scrape scrape) {
         if (value == null) {
             logScrape(domain + beanProperties + attrName, "null");
         } else if (value instanceof Number || value instanceof String || value instanceof Boolean
                    || value instanceof String[] || value instanceof CompositeDataSupport || value instanceof CompositeData[]) {
             logScrape(domain + beanProperties + attrName, value.toString());
-            recordBean(beanProperties, attrName, attrDescription, value);
+            recordBean(beanProperties, attrName, attrDescription, value, scrape);
         } else {
             logScrape(domain + beanProperties, attrType + " is not exported");
         }
@@ -151,12 +174,13 @@ public class CrateCollector extends Collector {
     private void recordBean(LinkedHashMap<String, String> beanProperties,
                             String attrName,
                             String attrDescription,
-                            Object beanValue) {
+                            Object beanValue,
+                            Scrape scrape) {
         String mBeanName = "";
         if (!beanProperties.isEmpty()) {
             mBeanName = beanProperties.values().iterator().next();
         }
-        beanValueConsumer.accept(mBeanName + "_" + attrName, beanValue);
+        scrape.beanValueConsumer.accept(mBeanName + "_" + attrName, beanValue);
 
         if (beanValue instanceof Number) {
             recordNumericMBeanValue(
@@ -165,7 +189,8 @@ public class CrateCollector extends Collector {
                     attrDescription,
                     beanValue,
                     mBeanName,
-                    ((Number) beanValue).doubleValue());
+                    ((Number) beanValue).doubleValue(),
+                    scrape);
         } else if (beanValue instanceof Boolean) {
             recordNumericMBeanValue(
                     beanProperties,
@@ -173,18 +198,20 @@ public class CrateCollector extends Collector {
                     attrDescription,
                     beanValue,
                     mBeanName,
-                    (Boolean) beanValue ? 1 : 0);
+                    (Boolean) beanValue ? 1 : 0,
+                    scrape);
         } else if (beanValue instanceof String[]) {
             recordStringArrayMBeanValue(
                 beanProperties,
                 attrName,
                 attrDescription,
                 (String[]) beanValue,
-                mBeanName);
+                mBeanName,
+                scrape);
         } else if (beanValue instanceof CompositeData) {
-            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue);
+            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData) beanValue, scrape);
         } else if (beanValue instanceof CompositeData[]) {
-            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData[]) beanValue);
+            recordCompositeDataMBeanValue(attrName, mBeanName, (CompositeData[]) beanValue, scrape);
         } else if ((beanValue instanceof String) == false) {
             // only log on non-string values, string values are ignored by intend
             LOGGER.log(Level.WARNING, "Ignoring unsupported bean: " + mBeanName + "_" + attrName + ": " + beanValue);
@@ -196,10 +223,11 @@ public class CrateCollector extends Collector {
                                          String attrDescription,
                                          Object beanValue,
                                          String mBeanName,
-                                         Number value) {
+                                         Number value,
+                                         Scrape scrape) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
-            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, this::addSample);
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, value, scrape::addSample);
             if (supportedAttribute == false) {
                 LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
@@ -208,7 +236,7 @@ public class CrateCollector extends Collector {
             String beanName = CRATE_DOMAIN_REPLACEMENT + angleBrackets(beanProperties.toString());
             // attrDescription tends not to be useful, so give the fully qualified name too.
             String help = attrDescription + " (" + beanName + attrName + ")";
-            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNKNOWN);
+            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, value, Type.UNKNOWN, scrape);
         }
     }
 
@@ -216,10 +244,11 @@ public class CrateCollector extends Collector {
                                              String attrName,
                                              String attrDescription,
                                              String[] beanValue,
-                                             String mBeanName) {
+                                             String mBeanName,
+                                             Scrape scrape) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
-            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, scrape::addSample);
             if (supportedAttribute == false) {
                 LOGGER.log(Level.WARNING,
                     "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + Arrays.toString(beanValue));
@@ -228,16 +257,17 @@ public class CrateCollector extends Collector {
             String beanName = CRATE_DOMAIN_REPLACEMENT + angleBrackets(beanProperties.toString());
             // attrDescription tends not to be useful, so give the fully qualified name too.
             String help = attrDescription + " (" + beanName + attrName + ")";
-            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, 0.0, Type.UNKNOWN);
+            defaultExport(CRATE_DOMAIN_REPLACEMENT, mBeanName, attrName, help, 0.0, Type.UNKNOWN, scrape);
         }
     }
 
     private void recordCompositeDataMBeanValue(String attrName,
                                                String mBeanName,
-                                               CompositeData beanValue) {
+                                               CompositeData beanValue,
+                                               Scrape scrape) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
-            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, scrape::addSample);
             if (supportedAttribute == false) {
                 LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + beanValue);
@@ -250,10 +280,11 @@ public class CrateCollector extends Collector {
 
     private void recordCompositeDataMBeanValue(String attrName,
                                                String mBeanName,
-                                               CompositeData[] beanValue) {
+                                               CompositeData[] beanValue,
+                                               Scrape scrape) {
         Recorder recorder = RecorderRegistry.get(mBeanName);
         if (recorder != null) {
-            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, this::addSample);
+            boolean supportedAttribute = recorder.recordBean(CRATE_DOMAIN_REPLACEMENT, attrName, beanValue, scrape::addSample);
             if (supportedAttribute == false) {
                 LOGGER.log(Level.WARNING,
                         "Ignoring unsupported bean attribute: " + mBeanName + "_" + attrName + ": " + Arrays.toString(beanValue));
@@ -270,7 +301,8 @@ public class CrateCollector extends Collector {
                                String attrName,
                                String help,
                                Number value,
-                               Type type) {
+                               Type type,
+                               Scrape scrape) {
         StringBuilder name = new StringBuilder();
         name.append(domain);
         if (!mBeanName.isEmpty()) {
@@ -284,18 +316,7 @@ public class CrateCollector extends Collector {
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.log(Level.FINE, "add metric sample: " + fullname + " " + value.doubleValue());
         }
-        addSample(new MetricFamilySamples.Sample(fullname, Collections.emptyList(), Collections.emptyList(), value.doubleValue()), type, help);
-    }
-
-    private void addSample(MetricFamilySamples.Sample sample, Type type, String help) {
-        MetricFamilySamples mfs = metricFamilySamplesMap.get(sample.name);
-        if (mfs == null) {
-            // JmxScraper.MBeanReceiver is only called from one thread,
-            // so there's no race here.
-            mfs = new MetricFamilySamples(sample.name, type, help, new ArrayList<>());
-            metricFamilySamplesMap.put(sample.name, mfs);
-        }
-        mfs.samples.add(sample);
+        scrape.addSample(new MetricFamilySamples.Sample(fullname, Collections.emptyList(), Collections.emptyList(), value.doubleValue()), type, help);
     }
 
     private static Set<ObjectName> resolveMBean(String mBeanPattern) {

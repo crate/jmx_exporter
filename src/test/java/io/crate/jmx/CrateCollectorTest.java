@@ -39,12 +39,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertThat;
 
 @SuppressWarnings("deprecation")
@@ -52,11 +60,10 @@ public class CrateCollectorTest {
 
     private CrateCollector crateCollector;
     private MBeanServer mbeanServer;
-    private final MBeanAttributeValueStorage beanAttributeValueStorage = new MBeanAttributeValueStorage();
 
     @Before
     public void setUpCollectorAndMbeanServer() {
-        crateCollector = new CrateCollector(beanAttributeValueStorage::put).register();
+        crateCollector = new CrateCollector().register();
         mbeanServer = ManagementFactory.getPlatformMBeanServer();
     }
 
@@ -244,14 +251,15 @@ public class CrateCollectorTest {
         mbeanServer.registerMBean(dummyBean, new ObjectName(CrateDummyStatus.NAME));
 
         // manually start metric collection
-        crateCollector.collect();
+        Map<String, Object> attributeValues = new HashMap<>();
+        crateCollector.collect("*", attributeValues::put);
 
-        assertThat(beanAttributeValueStorage.get("DummyStatus_SomethingEnabled"), is(true));
-        assertThat(beanAttributeValueStorage.get("DummyStatus_SelectStats"), is(123L));
+        assertThat(attributeValues.get("DummyStatus_SomethingEnabled"), is(true));
+        assertThat(attributeValues.get("DummyStatus_SelectStats"), is(123L));
 
         dummyBean.boolValue = false;
-        crateCollector.collect();
-        assertThat(beanAttributeValueStorage.get("DummyStatus_SomethingEnabled"), is(false));
+        crateCollector.collect("*", attributeValues::put);
+        assertThat(attributeValues.get("DummyStatus_SomethingEnabled"), is(false));
     }
 
     @Test
@@ -455,6 +463,57 @@ public class CrateCollectorTest {
         assertThat(sample.labelNames, is(Arrays.asList("name", "property")));
         assertThat(sample.labelValues, is(Arrays.asList("request", "used")));
         assertThat(sample.value, is(42.0d));
+    }
+
+    @Test
+    public void testConcurrentCollectsDoNotInterfere() throws Exception {
+        mbeanServer.registerMBean(new QueryStats(), new ObjectName(QueryStats.NAME));
+        mbeanServer.registerMBean(new CrateDummyStatus(), new ObjectName(CrateDummyStatus.NAME));
+        mbeanServer.registerMBean(new CrateDummyNodeInfo(), new ObjectName(CrateDummyNodeInfo.NAME));
+        mbeanServer.registerMBean(new Connections(), new ObjectName(Connections.NAME));
+        mbeanServer.registerMBean(new ThreadPools(), new ObjectName(ThreadPools.NAME));
+        mbeanServer.registerMBean(new CircuitBreakers(), new ObjectName(CircuitBreakers.NAME));
+
+        // Full scrapes (like /metrics) race with partial ones (like /ready)
+        // on the same collector instance.
+        Map<String, Integer> expectedAll = sampleCounts(crateCollector.collect());
+        Map<String, Integer> expectedPartial = sampleCounts(crateCollector.collect("type=DummyStatus", (k, v) -> { }));
+        assertThat(expectedAll.size(), is(greaterThan(expectedPartial.size())));
+
+        int threads = 8;
+        int iterations = 200;
+        ExecutorService executor = Executors.newFixedThreadPool(threads);
+        CyclicBarrier start = new CyclicBarrier(threads);
+        List<Future<?>> futures = new ArrayList<>();
+        for (int t = 0; t < threads; t++) {
+            boolean partial = t % 2 == 1;
+            futures.add(executor.submit(() -> {
+                start.await();
+                for (int i = 0; i < iterations; i++) {
+                    if (partial) {
+                        assertThat(sampleCounts(crateCollector.collect("type=DummyStatus", (k, v) -> { })), is(expectedPartial));
+                    } else {
+                        assertThat(sampleCounts(crateCollector.collect()), is(expectedAll));
+                    }
+                }
+                return null;
+            }));
+        }
+        try {
+            for (Future<?> future : futures) {
+                future.get(60, TimeUnit.SECONDS);
+            }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private static Map<String, Integer> sampleCounts(List<Collector.MetricFamilySamples> families) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (Collector.MetricFamilySamples family : families) {
+            counts.merge(family.name, family.samples.size(), Integer::sum);
+        }
+        return counts;
     }
 
     @SuppressWarnings("unused")
